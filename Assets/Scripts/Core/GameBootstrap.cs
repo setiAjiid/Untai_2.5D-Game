@@ -32,6 +32,7 @@ namespace Untai.Core
             var level = gameObject.AddComponent<LevelBuilder>();
             level.player = player;
             level.thread = thread;
+            gameObject.AddComponent<AI.EnemySpawner>().Bind(level, health);
             var kill = gameObject.AddComponent<KillZone>();
             kill.player = health;
             kill.killHeight = level.killHeight;
