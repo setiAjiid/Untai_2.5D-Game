@@ -85,6 +85,18 @@ namespace Untai.Core
             }
         }
 
+        /// <summary>Shift/J (gamepad: West/RT) ditekan sekali: kait atau lepas jangkar.</summary>
+        public static bool ThreadPressed
+        {
+            get
+            {
+                var k = Keyboard.current;
+                var g = Gamepad.current;
+                return (k != null && (k.leftShiftKey.wasPressedThisFrame || k.jKey.wasPressedThisFrame)) ||
+                       (g != null && (g.buttonWest.wasPressedThisFrame || g.rightTrigger.wasPressedThisFrame));
+            }
+        }
+
         /// <summary>Tahan F (gamepad: North) untuk menggulung untai dan menarik pasangan.</summary>
         public static bool ReelHeld
         {

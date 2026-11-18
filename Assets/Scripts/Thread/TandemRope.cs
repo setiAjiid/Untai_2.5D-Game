@@ -53,7 +53,7 @@ namespace Untai.Thread
         public PlayerMotor Hanging { get; private set; }
 
         float _hookRope;
-        bool _prevHookHeld;
+        bool _hookAirborne;
         bool _jumpQueued;
         bool _hangJumpQueued;
         [Tooltip("Kecepatan lompat dari untai saat menggantung (dikali jumpVelocity).")]
@@ -94,12 +94,14 @@ namespace Untai.Thread
             var active = tandem.Active;
             if (Hooked == null) UpdateCandidate(active);
 
-            bool held = active.InputEnabled && InputReader.ThreadHeld;
-            if (held && !_prevHookHeld && Hooked == null && Candidate != null) Hook(Candidate, active);
-            else if (!held && Hooked != null) Unhook(false);
+            // Kait jangkar cukup ditekan sekali (toggle): tekan lagi atau Space untuk melepas.
+            if (active.InputEnabled && InputReader.ThreadPressed)
+            {
+                if (Hooked == null && Candidate != null) Hook(Candidate, active);
+                else if (Hooked != null) Unhook(false);
+            }
             if (Hooked != null && InputReader.JumpPressed) _jumpQueued = true;
             else if (Hanging == active && active.InputEnabled && InputReader.JumpPressed) _hangJumpQueued = true;
-            _prevHookHeld = held;
 
             Reeling = active.InputEnabled && InputReader.ReelHeld;
         }
@@ -130,6 +132,7 @@ namespace Untai.Thread
         void Hook(Anchor anchor, PlayerMotor active)
         {
             Hooked = anchor;
+            _hookAirborne = false;
             _hookRope = Mathf.Max(minLength, Vector2.Distance(anchor.transform.position, active.transform.position));
             active.ExternalControl = true;
             if (Candidate != null) Candidate.SetHighlight(false);
@@ -164,6 +167,13 @@ namespace Untai.Thread
             Vector3 b = partner.Body.position;
             Distance = Vector2.Distance(a, b);
             Hanging = null;
+
+            if (Hooked != null)
+            {
+                // Lepas otomatis saat mendarat setelah berayun/memanjat, agar bisa langsung berjalan.
+                if (!active.IsGrounded) _hookAirborne = true;
+                else if (_hookAirborne) Unhook(false);
+            }
 
             if (Hooked != null)
             {
