@@ -1,5 +1,7 @@
 using UnityEngine;
+using Untai.Level;
 using Untai.Player;
+using Untai.Thread;
 
 namespace Untai.Core
 {
@@ -19,13 +21,24 @@ namespace Untai.Core
         void Start()
         {
             EnsureLight();
-            // Sandbox sementara: lantai datar untuk menguji gerak.
+            // Sandbox sementara: lantai, lubang, checkpoint, dan goal untuk menguji mekanik.
             var root = new GameObject("Sandbox").transform;
-            Prims.Box("Ground", new Vector3(10f, -0.5f, 0f), new Vector3(40f, 1f, 3f), new Color(0.35f, 0.4f, 0.45f), root);
-            Prims.Box("Step", new Vector3(8f, 0.75f, 0f), new Vector3(3f, 1.5f, 3f), new Color(0.35f, 0.4f, 0.45f), root);
+            var grey = new Color(0.35f, 0.4f, 0.45f);
+            Prims.Box("Ground A", new Vector3(5f, -0.5f, 0f), new Vector3(14f, 1f, 3f), grey, root);
+            Prims.Box("Ground B", new Vector3(20f, -0.5f, 0f), new Vector3(12f, 1f, 3f), grey, root);
+            Prims.Box("Ground C", new Vector3(36f, -0.5f, 0f), new Vector3(10f, 1f, 3f), grey, root);
+
             var player = PlayerMotor.CreatePlayer(new Vector3(0f, 1.5f, 0f));
-            player.gameObject.AddComponent<Thread.ThreadController>();
-            player.gameObject.AddComponent<Thread.ThreadRenderer>();
+            var thread = player.gameObject.AddComponent<ThreadController>();
+            player.gameObject.AddComponent<ThreadRenderer>();
+            var health = player.gameObject.AddComponent<PlayerHealth>();
+
+            Checkpoint.Create(new Vector3(-1f, 0f, 0f), 20f, root).Activate(thread, true);
+            Checkpoint.Create(new Vector3(16f, 0f, 0f), 24f, root);
+            Goal.Create(new Vector3(38f, 0f, 0f), root);
+            var kill = new GameObject("KillZone").AddComponent<KillZone>();
+            kill.player = health;
+
             CameraRig.SideFollowCamera.Attach(player.transform);
         }
 
