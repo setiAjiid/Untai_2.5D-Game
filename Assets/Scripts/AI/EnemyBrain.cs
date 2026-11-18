@@ -70,12 +70,45 @@ namespace Untai.AI
             e._renderer = go.GetComponent<Renderer>();
             e._label = Prims.Label("", position + Vector3.up * 1.4f, go.transform, Color.white, 0.06f);
             e.Id = ++s_NextId;
+            e.ApplyAggression(Data.GameplayParameters.Active.aggression);
             e.EnterState(EnemyState.Patrol);
             return e;
         }
 
-        void OnEnable() => All.Add(this);
-        void OnDisable() => All.Remove(this);
+        /// <summary>Agresivitas yang sedang dipakai enemy ini (0..1).</summary>
+        public float Aggression { get; private set; } = -1f;
+
+        /// <summary>
+        /// Terjemahkan agresivitas (dari DDA lewat GameplayParameters) ke perilaku:
+        /// jarak deteksi makin jauh, kejaran makin cepat, ancang-ancang dan jeda serangan makin singkat.
+        /// </summary>
+        public void ApplyAggression(float a)
+        {
+            a = Mathf.Clamp01(a);
+            Aggression = a;
+            detectRange = Mathf.Lerp(3f, 9f, a);
+            chaseSpeed = Mathf.Lerp(1.8f, 5.5f, a);
+            attackCooldown = Mathf.Lerp(2.4f, 0.6f, a);
+            attackWindup = Mathf.Lerp(0.75f, 0.3f, a);
+            patrolSpeed = Mathf.Lerp(1.0f, 2.2f, a);
+            loseSightTime = Mathf.Lerp(0.6f, 2.5f, a);
+        }
+
+        void OnEnable()
+        {
+            All.Add(this);
+            Data.GameplayParameters.Changed += OnParametersChanged;
+            ApplyAggression(Data.GameplayParameters.Active.aggression);
+        }
+
+        void OnDisable()
+        {
+            All.Remove(this);
+            Data.GameplayParameters.Changed -= OnParametersChanged;
+        }
+
+        // Enemy yang sudah ada langsung memakai agresivitas terbaru hasil DDA.
+        void OnParametersChanged() => ApplyAggression(Data.GameplayParameters.Active.aggression);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
