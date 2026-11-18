@@ -12,7 +12,7 @@ namespace Untai.Player
     public class PlayerHealth : MonoBehaviour
     {
         public int maxHealth = 3;
-        public float invulnerableTime = 1.0f;
+        public float invulnerableTime = 1.5f;
 
         public int Health { get; private set; }
         public float HealthRatio => maxHealth > 0 ? Health / (float)maxHealth : 0f;
@@ -64,7 +64,8 @@ namespace Untai.Player
             _invulnerableUntil = Time.time + invulnerableTime;
             float side = Mathf.Sign(transform.position.x - sourcePosition.x);
             if (side == 0f) side = 1f;
-            _motor.Body.linearVelocity = new Vector3(side * 7f, 7f, 0f);
+            // Knockback kecil agar tidak mudah terpental ke jurang.
+            _motor.Body.linearVelocity = new Vector3(side * 3.5f, 5f, 0f);
         }
 
         public void Die(DeathCause cause)

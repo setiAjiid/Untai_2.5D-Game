@@ -18,7 +18,7 @@ namespace Untai.DDA
 
         public static DDAController Instance { get; private set; }
 
-        [Range(0f, 1f)] public float initialDifficulty = 0.4f;
+        [Range(0f, 1f)] public float initialDifficulty = 0.25f;
 
         public readonly DDAManager Manager = new DDAManager();
         public readonly DifficultyScorer Scorer = new DifficultyScorer();

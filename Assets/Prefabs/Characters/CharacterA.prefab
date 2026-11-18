@@ -267,4 +267,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Untai.Player.PlayerHealth
   maxHealth: 3
-  invulnerableTime: 1
+  invulnerableTime: 1.5

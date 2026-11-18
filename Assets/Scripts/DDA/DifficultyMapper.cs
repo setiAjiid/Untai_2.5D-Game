@@ -23,9 +23,9 @@ namespace Untai.DDA
         }
 
         public Range gap = new Range(5.5f, 8f, 1.0f);
-        public Range trap = new Range(0.1f, 0.85f, 0.2f);
+        public Range trap = new Range(0.05f, 0.7f, 0.2f);
         public Range enemy = new Range(1f, 3f, 1f);   // minimal 1 agar enemy selalu terlihat
-        public Range aggression = new Range(0.1f, 1f, 0.25f);
+        public Range aggression = new Range(0.05f, 0.85f, 0.2f);
         public Range checkpoint = new Range(1f, 3f, 1f);
         public Range thread = new Range(12f, 9f, 0.6f);      // panjang untai Tandem: makin sulit makin pendek (dilonggarkan untuk satu pemain)
         public Range anchor = new Range(7.5f, 6.0f, 0.5f);   // makin sulit, jangkauan jangkar makin pendek
