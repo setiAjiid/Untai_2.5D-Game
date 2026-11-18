@@ -49,6 +49,7 @@ namespace Untai.Thread
             {
                 // Checkpoint -> jangkar (melengkung) -> pemain (lurus, tegang).
                 count = FillSag(start, anchor.position, SegmentCount);
+                end.z = -0.6f;
                 _points[count++] = end;
             }
             else

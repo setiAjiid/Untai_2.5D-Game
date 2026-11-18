@@ -70,6 +70,10 @@ namespace Untai.Player
             if (!ExternalControl)
             {
                 float accel = IsGrounded ? groundAcceleration : airAcceleration;
+                // Di udara, momentum hasil ayunan dipertahankan selama input searah.
+                bool keepMomentum = !IsGrounded && Mathf.Abs(v.x) > moveSpeed &&
+                                    (Mathf.Abs(input) < 0.01f || Mathf.Sign(input) == Mathf.Sign(v.x));
+                if (keepMomentum) accel *= 0.15f;
                 v.x = Mathf.MoveTowards(v.x, input * moveSpeed, accel * dt);
 
                 // Lompat memakai coyote time dan jump buffer agar terasa responsif.
