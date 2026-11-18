@@ -7,6 +7,9 @@ namespace Untai.AI
 {
     public enum PartnerAction { Follow, Wait, Assist }
 
+    /// <summary>Perintah manual pemain lewat tombol E.</summary>
+    public enum PartnerCommand { None, WaitHere, FollowMe }
+
     /// <summary>
     /// AI untuk karakter Tandem yang tidak dikendalikan pemain. Menggerakkan PlayerMotor yang sama
     /// lewat IMotorInput (tanpa teleport), sehingga partner tunduk pada fisika dan untai yang sama.
@@ -63,6 +66,7 @@ namespace Untai.AI
         void Update()
         {
             if (!Ready) { _h = 0f; return; }
+            if (Core.InputReader.KeyDown(UnityEngine.InputSystem.Key.E)) ToggleCommand();
             ScoreActions();
             Act();
         }
@@ -109,7 +113,7 @@ namespace Untai.AI
                 // Karakter aktif bergantung pada untai: partner harus menjadi tumpuan.
                 follow *= 0.1f;
                 assist *= 0.3f;
-                wait += 0.7f;
+                wait += 0.8f;
             }
 
             Scores[(int)PartnerAction.Follow] = Mathf.Clamp01(follow);
@@ -119,8 +123,33 @@ namespace Untai.AI
             Choose(onRope);
         }
 
-        /// <summary>Titik tambah bobot (perintah manual, paksaan demo).</summary>
-        protected virtual void ApplyModifiers() { }
+        [Header("Perintah manual (E)")]
+        [Tooltip("Tambahan skor untuk aksi yang diperintahkan (besar, tetapi tidak mutlak).")]
+        public float commandBonus = 0.5f;
+        [Tooltip("Pengali skor aksi lain saat ada perintah.")]
+        public float commandDamp = 0.7f;
+
+        public PartnerCommand Command { get; private set; } = PartnerCommand.None;
+
+        /// <summary>E bergantian: "Tunggu di sini" lalu "Ikuti saya".</summary>
+        public void ToggleCommand()
+        {
+            Command = Command == PartnerCommand.WaitHere ? PartnerCommand.FollowMe : PartnerCommand.WaitHere;
+            _lastSwitch = -10f; // perintah boleh langsung mengubah aksi
+        }
+
+        /// <summary>
+        /// Perintah manual menaikkan skor aksi terkait dan meredam aksi lain. Tidak mutlak:
+        /// misalnya saat "Tunggu" tetapi untai sudah sangat tegang, Follow masih bisa menang.
+        /// </summary>
+        void ApplyModifiers()
+        {
+            int target = Command == PartnerCommand.WaitHere ? (int)PartnerAction.Wait
+                : Command == PartnerCommand.FollowMe ? (int)PartnerAction.Follow : -1;
+            if (target < 0) return;
+            for (int i = 0; i < Scores.Length; i++)
+                Scores[i] = i == target ? Mathf.Min(1f, Scores[i] + commandBonus) : Scores[i] * commandDamp;
+        }
 
         void Choose(bool onRope)
         {
