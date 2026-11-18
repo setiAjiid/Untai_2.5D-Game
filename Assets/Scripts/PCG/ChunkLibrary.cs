@@ -38,7 +38,7 @@ namespace Untai.PCG
                 New().Setup("E1", "Flat Walk", ChunkTier.Easy, 12f,
                     new[] { P(0, 0, 12) }, null, new[] { V(6, 0) }, new[] { 0 }),
                 New().Setup("E2", "Small Gaps", ChunkTier.Easy, 13f,
-                    new[] { P(0, 0, 4), P(6, 0, 3), P(11, 0, 2) }, null, new[] { V(2, 0) }),
+                    new[] { P(0, 0, 4), P(6, 0, 3), P(11, 0, 2) }, null, new[] { V(2, 0) }, new[] { 1 }),
                 New().Setup("E3", "Step Up", ChunkTier.Easy, 12f,
                     new[] { P(0, 0, 4), P(4, 1.5f, 8) }, null, new[] { V(9, 1.5f) }, new[] { 1 }),
                 // [untai] dinding 3 m (lebih tinggi dari lompatan): kait jangkar lalu panjat.
@@ -58,7 +58,7 @@ namespace Untai.PCG
                     new[] { P(0, 0, 3), P(6, 0, 10) }, null, new[] { V(9, 0), V(13, 0) }, new[] { 1, 1 }),
                 // [untai] jurang 6 m: jangkar atau ayun tandem.
                 New().Setup("M4", "Rope Bridge", ChunkTier.Medium, 14f,
-                    new[] { P(0, 1.5f, 4), P(10, 1.5f, 4) }, new[] { V(7f, 6.5f) }, new[] { V(12, 1.5f) }),
+                    new[] { P(0, 1.5f, 4), P(10, 1.5f, 4) }, new[] { V(7f, 6.5f) }, new[] { V(12, 1.5f) }, new[] { 1 }),
 
                 // ---------- Sulit ----------
                 // [untai] jurang 7 m: jangkar (untai pendek) atau ayun tandem (untai panjang).
@@ -74,7 +74,7 @@ namespace Untai.PCG
                     new[] { P(0, 1.5f, 3), P(9, 1.5f, 5) }, null, new[] { V(11, 1.5f) }, new[] { 1 }),
                 // [untai] dua jurang berturut-turut dengan pijakan sempit di tengah.
                 New().Setup("H5", "Twin Anchors", ChunkTier.Hard, 20f,
-                    new[] { P(0, 0, 3), P(9, 0, 2), P(17, 0, 3) }, new[] { V(6f, 5.5f), V(14f, 5.5f) }),
+                    new[] { P(0, 0, 3), P(9, 0, 2), P(17, 0, 3) }, new[] { V(6f, 5.5f), V(14f, 5.5f) }, null, new[] { 2 }),
             };
         }
 

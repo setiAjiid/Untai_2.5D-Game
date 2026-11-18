@@ -24,7 +24,7 @@ namespace Untai.DDA
 
         public Range gap = new Range(5.5f, 8f, 1.0f);
         public Range trap = new Range(0.1f, 0.85f, 0.2f);
-        public Range enemy = new Range(0f, 3f, 1f);
+        public Range enemy = new Range(1f, 3f, 1f);   // minimal 1 agar enemy selalu terlihat
         public Range aggression = new Range(0.1f, 1f, 0.25f);
         public Range checkpoint = new Range(1f, 3f, 1f);
         public Range thread = new Range(10f, 8f, 0.6f);      // panjang untai Tandem: makin sulit makin pendek
