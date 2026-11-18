@@ -115,6 +115,52 @@ Satu entri per fase: tujuan, file utama, dan keputusan penting.
   - Simulasi performa (F3/F4) dimasukkan lewat `PerformanceTracker`, melewati jalur yang sama dengan
     permainan asli.
 
+## Fase 8: Prefab dan scene yang bisa diedit
+
+- **Tujuan:** objek game menjadi prefab yang bisa diedit di Editor, tanpa mengubah logika PCG, DDA, AI,
+  maupun benang; Hierarchy scene utama tidak lagi kosong.
+- **File utama:** `Data/PrefabLibrary.cs`, `Editor/PrefabBuilder.cs`, `Level/PlatformVisual.cs`,
+  `Assets/Prefabs/**`, `Assets/Materials/**`, `Assets/Data/Resources/Untai/PrefabLibrary.asset`,
+  `Assets/Scenes/Untai_Main.unity`.
+- **Keputusan:**
+  - Setiap pembuat objek (`Anchor.Create`, `Checkpoint.Create`, `Goal.Create`, `Trap.Create`,
+    `EnemyBrain.Create`, `PlayerMotor.Spawn`, platform di `ChunkBuilder`) mencoba prefab dari `PrefabLibrary`
+    lebih dulu, lalu fallback ke versi primitif lama (`CreatePrimitive`). Tanda tangan fungsi tidak berubah,
+    jadi LevelBuilder, PCG, dan DDA tidak tersentuh.
+  - Prefab dibangun oleh skrip Editor dari fungsi `CreatePrimitive` yang sama dengan fallback, sehingga
+    prefab dan fallback identik. Builder idempoten: aset yang sudah ada tidak ditimpa.
+  - Warna yang dulu tertanam di kode (state enemy, tingkat platform, jangkar, checkpoint) menjadi field
+    `Material` di Inspector; nilai lama tetap dipakai sebagai warna fallback. Ukuran dasar platform
+    (`platformDepth`, `pillarBottom`) dipindah ke `PrefabLibrary`.
+  - Prefab, material, dan scene dibuat dengan menjalankan builder lewat Unity batchmode pada salinan proyek,
+    lalu file hasilnya (beserta `.meta`) di-commit, sehingga tidak ada langkah manual.
+  - Platform memakai satu prefab kubus 1x1x1 yang diskalakan data chunk; warnanya dipilih `PlatformVisual`
+    berdasarkan tingkat chunk.
+  - Objek level hasil PCG dikumpulkan di bawah parent `GeneratedLevel` (enemy di `GeneratedLevel/Enemies`).
+  - `ThreadPickup` tidak dibuat karena objek tersebut belum ada di game.
+
+### Struktur prefab
+
+| Prefab | Isi | Komponen penting |
+|---|---|---|
+| `Characters/Player` | kapsul + child `Eye` | Rigidbody, CapsuleCollider (PM_PlayerNoFriction), PlayerMotor, ThreadController, ThreadRenderer, PlayerHealth, ThreadSwing |
+| `Characters/Enemy` | kapsul (trigger) + `Visor` + `Label` | EnemyBrain (material per state, bodyRenderer, stateLabel) |
+| `Level/Platform` | kubus 1x1x1 | BoxCollider, PlatformVisual (material mudah/sedang/sulit) |
+| `Level/Checkpoint` | `Pole` + `Spool` | BoxCollider trigger, Checkpoint (material idle/aktif) |
+| `Level/Goal` | dua tiang + palang + label | BoxCollider trigger, Goal |
+| `Level/Trap` | tiga duri | BoxCollider trigger, Trap |
+| `Level/KillZone` | kosong | KillZone (cek ketinggian) |
+| `Thread/Anchor` | bola | Anchor (material idle/sorot) |
+
+### Mengganti model dummy dengan aset asli
+
+1. Buka prefab (klik dua kali di Project), tambahkan model sebagai child.
+2. Matikan `MeshRenderer` primitif lama (atau hapus `MeshFilter` + `MeshRenderer`-nya), tetapi biarkan
+   collider, Rigidbody, dan komponen skrip.
+3. Arahkan field renderer ke model baru: `EnemyBrain.bodyRenderer`, `Anchor.targetRenderer`,
+   `Checkpoint.spool`, `PlatformVisual.targetRenderer`.
+4. Simpan prefab; perubahan langsung terpakai saat Play karena builder runtime meng-Instantiate prefab ini.
+
 ---
 
 ## Alur Sistem

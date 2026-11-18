@@ -37,14 +37,17 @@ berupa primitif (kapsul dan kubus) sebagai placeholder.
 |---|---|---|
 | Player | `Assets/Scripts/Player` | Gerak samping, lompat variabel, nyawa, respawn |
 | Thread | `Assets/Scripts/Thread` | Sumber daya benang, render benang, ayunan jangkar |
-| Level | `Assets/Scripts/Level` | Checkpoint, kill zone, goal, pembangun chunk menjadi primitif |
+| Level | `Assets/Scripts/Level` | Checkpoint, kill zone, goal, jebakan, `LevelBuilder`/`ChunkBuilder` (instansiasi prefab per chunk) |
 | PCG | `Assets/Scripts/PCG` | Data chunk, perakit chunk berbobot berbasis seed, validasi jangkauan (BFS) |
 | DDA | `Assets/Scripts/DDA` | Pencatat performa, skor kesulitan rolling window, pemetaan ke parameter |
 | AI | `Assets/Scripts/AI` | FSM enemy (Patrol, Chase, Attack, Return) |
-| Data | `Assets/Scripts/Data` | `GameplayParameters` (ScriptableObject), sumber tunggal parameter |
+| Data | `Assets/Scripts/Data` | `GameplayParameters` (sumber tunggal parameter) dan `PrefabLibrary` (daftar prefab) |
 | Debug | `Assets/Scripts/Debug` | HUD debug dan tombol demo |
 | CameraRig | `Assets/Scripts/CameraRig` | Kamera follow samping |
-| Core | `Assets/Scripts/Core` | Event global, input, game loop |
+| Core | `Assets/Scripts/Core` | `GameDirector` (perakit sistem dan game loop), event global, input |
+| Editor | `Assets/Scripts/Editor` | Menu Untai: generator chunk, prefab, material, dan isi scene |
+| Prefab | `Assets/Prefabs/{Characters,Level,Thread}` | Player, Enemy / Platform, Checkpoint, Goal, Trap, KillZone / Anchor |
+| Material | `Assets/Materials` | Satu material per warna (pemain, state enemy, tingkat platform, dll.) |
 
 Detail struktur folder: [docs/STRUCTURE.md](docs/STRUCTURE.md).
 
@@ -65,9 +68,35 @@ Prototipe siap demo (Project EAS). Yang sudah berjalan:
 
 1. Buka proyek dengan **Unity 6000.3.23f1**.
 2. Buka scene `Assets/Scenes/Untai_Main.unity` lalu tekan **Play**.
-   Scene lain (misal `SampleScene`) juga bisa: bootstrap otomatis membuat game saat Play.
-3. Tidak ada langkah manual wajib. Aset chunk dibuat otomatis oleh Editor saat proyek dimuat
-   (atau lewat menu **Untai > Generate Sample Chunks**); tanpa aset pun game memakai definisi bawaan.
+   Hierarchy scene berisi `GameDirector`, `Player` (instance prefab), `Main Camera` (dengan
+   `SideFollowCamera`), `KillZone`, `Directional Light`, dan `Global Volume`. Objek level hasil PCG
+   dibuat saat Play di bawah `GeneratedLevel`.
+3. Scene lain (misal `SampleScene`) juga bisa: bootstrap otomatis membuat game saat Play.
+4. Prefab, material, `PrefabLibrary`, dan isi scene sudah ada di repo. Bila ada yang terhapus,
+   jalankan menu **Untai > Build Prefabs and Scene** (aman diulang: prefab yang sudah diedit tidak ditimpa).
+   Aset chunk dibuat lewat **Untai > Generate Sample Chunks** (juga otomatis saat Editor dimuat).
+
+## Prefab dan PrefabLibrary
+
+```
+Assets/Prefabs/Characters/  Player.prefab   Enemy.prefab
+Assets/Prefabs/Level/       Platform.prefab Checkpoint.prefab Goal.prefab Trap.prefab KillZone.prefab
+Assets/Prefabs/Thread/      Anchor.prefab
+Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukuran dasar platform)
+```
+
+- **Cara kerja:** `GameDirector` memegang referensi `PrefabLibrary` dan `GameplayParameters` di Inspector.
+  Builder runtime (`LevelBuilder`, `ChunkBuilder`, `EnemySpawner`, `PlayerMotor.Spawn`) meng-*Instantiate*
+  prefab dari slot pustaka; posisi dan skala platform tetap dari data chunk. Jika pustaka atau slot kosong,
+  builder membuat primitif dari kode (fallback), jadi game tetap jalan.
+- **Mengubah warna:** edit material di `Assets/Materials` (misal `M_PlatformHard`, `M_EnemyChase`) atau ganti
+  field material pada komponen prefab (`PlatformVisual`, `EnemyBrain`, `Anchor`, `Checkpoint`).
+- **Mengganti model dummy:** buka prefab (misal `Player.prefab`), tambahkan model sebagai child, lalu matikan
+  atau hapus `MeshRenderer` kapsul. **Jangan hapus** collider dan komponen skripnya (`PlayerMotor`,
+  `ThreadController`, `ThreadRenderer`, `PlayerHealth`, `ThreadSwing`, `Rigidbody`). Untuk enemy, arahkan
+  `EnemyBrain.bodyRenderer` ke renderer model baru agar warna state tetap terlihat.
+- **Prefab baru:** buat prefab sendiri lalu seret ke slot di `PrefabLibrary`; slot yang terisi tidak diubah
+  oleh menu builder.
 
 ## Kontrol
 
