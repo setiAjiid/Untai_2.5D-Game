@@ -95,9 +95,23 @@ namespace Untai.Data
             }
         }
 
+        static GameplayParameters s_Source;
+
+        /// <summary>
+        /// Pakai aset tertentu (misal yang diisi di Inspector GameDirector) sebagai sumber salinan runtime.
+        /// Dipanggil sebelum ada skrip yang membaca Active.
+        /// </summary>
+        public static void UseSource(GameplayParameters asset)
+        {
+            if (asset == null) return;
+            s_Source = asset;
+            s_Active = null;
+            s_Baseline = null;
+        }
+
         static GameplayParameters CreateRuntimeCopy()
         {
-            var asset = Resources.Load<GameplayParameters>(ResourcePath);
+            var asset = s_Source != null ? s_Source : Resources.Load<GameplayParameters>(ResourcePath);
             var copy = asset != null ? Instantiate(asset) : CreateInstance<GameplayParameters>();
             copy.name = "GameplayParameters (Runtime)";
             copy.hideFlags = HideFlags.DontSave;
@@ -117,6 +131,7 @@ namespace Untai.Data
         {
             s_Active = null;
             s_Baseline = null;
+            s_Source = null;
             Changed = null;
         }
     }

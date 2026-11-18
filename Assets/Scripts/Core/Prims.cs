@@ -33,9 +33,21 @@ namespace Untai.Core
             go.transform.position = position;
             go.transform.localScale = scale;
             go.GetComponent<Renderer>().sharedMaterial = Mat(color);
-            if (!keepCollider) Object.Destroy(go.GetComponent<Collider>());
+            // DestroyImmediate agar juga aman dipakai generator prefab di mode Edit.
+            if (!keepCollider) Object.DestroyImmediate(go.GetComponent<Collider>());
             return go;
         }
+
+        /// <summary>Instansiasi prefab pada posisi dunia tanpa akhiran "(Clone)".</summary>
+        public static GameObject Spawn(GameObject prefab, Vector3 position, Transform parent)
+        {
+            var go = Object.Instantiate(prefab, position, prefab.transform.rotation, parent);
+            go.name = prefab.name;
+            return go;
+        }
+
+        /// <summary>Material dari Inspector bila ada, jika tidak material runtime berwarna fallback.</summary>
+        public static Material MatOr(Material assigned, Color fallback) => assigned != null ? assigned : Mat(fallback);
 
         /// <summary>Kotak dengan pusat dan ukuran dunia.</summary>
         public static GameObject Box(string name, Vector3 center, Vector3 size, Color color, Transform parent,
