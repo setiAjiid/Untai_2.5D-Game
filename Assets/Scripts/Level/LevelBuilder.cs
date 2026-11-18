@@ -1,0 +1,206 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using UnityEngine;
+using Untai.Core;
+using Untai.Data;
+using Untai.PCG;
+using Untai.Player;
+using Untai.Thread;
+
+namespace Untai.Level
+{
+    /// <summary>Informasi chunk yang sudah dibangun di dunia.</summary>
+    public class BuiltChunk
+    {
+        public int index;
+        public ChunkDefinition def;
+        public float startX;
+        public float endX;
+        public int attempts;
+        public bool fallback;
+        public bool hasCheckpoint;
+        public int trapCount;
+        public int enemyCount;
+        public string note;
+        public string paramSummary;
+    }
+
+    /// <summary>
+    /// Pembangun level streaming: chunk dirakit satu per satu beberapa langkah di depan pemain
+    /// sehingga chunk berikutnya selalu memakai parameter terbaru (hasil DDA).
+    /// Checkpoint dipasang tiap checkpointInterval chunk, dan dipaksa lebih rapat bila
+    /// panjang benang dari checkpoint terakhir tidak cukup untuk mencapai checkpoint berikutnya.
+    /// </summary>
+    public class LevelBuilder : MonoBehaviour
+    {
+        public int chunksPerLevel = 8;
+        public int lookahead = 2;
+        public float killHeight = -6f;
+
+        public static LevelBuilder Instance { get; private set; }
+
+        public PlayerMotor player;
+        public ThreadController thread;
+
+        public int Seed { get; private set; }
+        public int LevelNumber { get; private set; }
+        public int PlayerChunkIndex { get; private set; }
+        public readonly List<BuiltChunk> Chunks = new List<BuiltChunk>();
+        public string Sequence { get; private set; } = "";
+        public string LastNote { get; private set; } = "";
+        public ChunkAssembler Assembler => _assembler;
+
+        /// <summary>Diminta saat chunk dibangun; modul AI yang membuat enemy-nya.</summary>
+        public event Action<EnemySpawnInfo> EnemySpawnRequested;
+        /// <summary>Level baru mulai dibangun (enemy lama perlu dibersihkan).</summary>
+        public event Action LevelCleared;
+
+        List<ChunkDefinition> _library;
+        ChunkAssembler _assembler;
+        Transform _root;
+        float _cursorX;
+        float _prevExit;
+        ChunkDefinition _prevDef;
+        float _distSinceCheckpoint;
+        int _chunksSinceCheckpoint;
+        float _checkpointThread;
+        bool _goalBuilt;
+        Checkpoint _firstCheckpoint;
+        readonly List<EnemySpawnInfo> _spawnBuffer = new List<EnemySpawnInfo>(8);
+        readonly StringBuilder _seq = new StringBuilder(128);
+
+        void Awake()
+        {
+            Instance = this;
+            _library = ChunkLibrary.Load();
+            _assembler = new ChunkAssembler(_library);
+        }
+
+        public void BuildLevel(int seed, int levelNumber)
+        {
+            Seed = seed;
+            LevelNumber = levelNumber;
+            if (_root != null) Destroy(_root.gameObject);
+            LevelCleared?.Invoke();
+            _root = new GameObject("Level (seed " + seed + ")").transform;
+            Chunks.Clear();
+            _seq.Length = 0;
+            _cursorX = 0f;
+            _prevExit = 0f;
+            _prevDef = null;
+            _distSinceCheckpoint = 0f;
+            _chunksSinceCheckpoint = 0;
+            _checkpointThread = GameplayParameters.Active.threadLength;
+            _goalBuilt = false;
+            _firstCheckpoint = null;
+
+            Place(ChunkLibrary.CreateStart(), new ChunkAssembler.PickResult { attempts = 1, note = "awal" }, true);
+            PlayerChunkIndex = 0;
+            EnsureAhead(0);
+
+            if (player != null)
+            {
+                player.TeleportTo(new Vector3(2.5f, 1.2f, 0f));
+                if (thread != null && _firstCheckpoint != null) _firstCheckpoint.Activate(thread, true);
+            }
+        }
+
+        void Update()
+        {
+            if (player == null || Chunks.Count == 0) return;
+            float x = player.transform.position.x;
+            int idx = PlayerChunkIndex;
+            while (idx + 1 < Chunks.Count && x >= Chunks[idx + 1].startX) idx++;
+            if (idx > PlayerChunkIndex)
+            {
+                PlayerChunkIndex = idx;
+                EnsureAhead(idx);
+                GameEvents.RaiseChunkEntered(idx);
+            }
+        }
+
+        void EnsureAhead(int idx)
+        {
+            while (!_goalBuilt && Chunks.Count <= idx + lookahead) GenerateNext();
+        }
+
+        void GenerateNext()
+        {
+            int index = Chunks.Count;
+            if (index > chunksPerLevel)
+            {
+                var goalChunk = ChunkLibrary.CreateGoal(_prevExit);
+                var bc = Place(goalChunk, new ChunkAssembler.PickResult { attempts = 1, note = "goal" }, false);
+                Goal.Create(new Vector3(bc.startX + 6f, goalChunk.exitHeight, 0f), _root);
+                _goalBuilt = true;
+                return;
+            }
+            var p = GameplayParameters.Active;
+            var pick = _assembler.Pick(Seed, index, _prevDef, _prevExit, p, ValidateCandidate);
+            Place(pick.def, pick, false);
+        }
+
+        /// <summary>Hook validasi kandidat; null berarti lolos.</summary>
+        protected virtual string ValidateCandidate(ChunkDefinition c) => null;
+
+        BuiltChunk Place(ChunkDefinition def, ChunkAssembler.PickResult pick, bool forceCheckpoint)
+        {
+            var p = GameplayParameters.Active;
+            int index = Chunks.Count;
+            bool special = def.id == "S0" || def.id == "G0";
+
+            // Checkpoint: wajib bila interval tercapai atau benang tidak cukup sampai akhir chunk ini.
+            bool needCheckpoint = forceCheckpoint
+                                  || _chunksSinceCheckpoint >= p.checkpointInterval
+                                  || _distSinceCheckpoint + def.width + 1.5f > _checkpointThread * 0.9f;
+            if (needCheckpoint)
+            {
+                var cp = Checkpoint.Create(new Vector3(_cursorX + 1f, def.entryHeight, 0f), p.threadLength, _root);
+                if (_firstCheckpoint == null) _firstCheckpoint = cp;
+                _checkpointThread = p.threadLength;
+                _distSinceCheckpoint = def.width - 1f;
+                _chunksSinceCheckpoint = 1;
+            }
+            else
+            {
+                _distSinceCheckpoint += def.width;
+                _chunksSinceCheckpoint++;
+            }
+
+            _spawnBuffer.Clear();
+            int chunkSeed = ChunkAssembler.DeriveSeed(Seed, index, 999);
+            ChunkBuilder.Build(def, _cursorX, _root, special ? 0f : p.trapDensity, special ? 0 : p.enemyCount,
+                chunkSeed, _spawnBuffer, out int traps);
+
+            var bc = new BuiltChunk
+            {
+                index = index, def = def, startX = _cursorX, endX = _cursorX + def.width,
+                attempts = pick.attempts, fallback = pick.fallback, hasCheckpoint = needCheckpoint,
+                trapCount = traps, enemyCount = _spawnBuffer.Count, note = pick.note,
+                paramSummary = "gap<=" + p.maxGapWidth.ToString("0.0") + " trap " + p.trapDensity.ToString("0.00") +
+                               " enemy " + p.enemyCount + " aggr " + p.aggression.ToString("0.00")
+            };
+            Chunks.Add(bc);
+            LastNote = "#" + index + " " + def.id + ": " + pick.note;
+
+            if (_seq.Length > 0) _seq.Append(' ');
+            _seq.Append(def.id);
+            Sequence = _seq.ToString();
+
+            Prims.Label("#" + index + " " + def.id + " " + def.displayName + " [" + def.tier + "]\n" + bc.paramSummary,
+                new Vector3(bc.startX + def.width * 0.5f, 8f, 0f), _root, new Color(1f, 1f, 1f, 0.85f), 0.07f);
+
+            for (int i = 0; i < _spawnBuffer.Count; i++) EnemySpawnRequested?.Invoke(_spawnBuffer[i]);
+
+            _cursorX += def.width;
+            _prevExit = def.exitHeight;
+            _prevDef = special ? null : def;
+            return bc;
+        }
+
+        /// <summary>Indeks chunk berikutnya yang belum dibangun (untuk HUD).</summary>
+        public int NextChunkIndex => Chunks.Count;
+        public float LevelEndX => _cursorX;
+    }
+}

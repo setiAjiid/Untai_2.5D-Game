@@ -2,6 +2,7 @@ using System.Text;
 using UnityEngine;
 using Untai.Data;
 using Untai.DDA;
+using Untai.Level;
 using Untai.Thread;
 
 namespace Untai.DebugTools
@@ -54,6 +55,7 @@ namespace Untai.DebugTools
             sb.Append("<b>UNTAI  Debug HUD</b>  <color=#999>(F1 sembunyikan)</color>\n");
             AppendPerformance(sb);
             AppendParameters(sb);
+            AppendGameplay(sb);
             _content.text = sb.ToString();
         }
 
@@ -96,6 +98,18 @@ namespace Untai.DebugTools
             Param(sb, " M", p.mediumWeight, o.mediumWeight, "0.00");
             Param(sb, " H", p.hardWeight, o.hardWeight, "0.00");
             sb.Append('\n');
+        }
+
+        void AppendGameplay(StringBuilder sb)
+        {
+            sb.Append("\n<b><color=#b4ff9a>[4] GAMEPLAY (PCG)</color></b>\n");
+            var lb = LevelBuilder.Instance;
+            if (lb == null) { sb.Append("  (level belum dibangun)\n"); return; }
+            sb.Append("  <b>SEED ").Append(lb.Seed).Append("</b>  level ").Append(lb.LevelNumber)
+              .Append("  chunk pemain #").Append(lb.PlayerChunkIndex)
+              .Append(" / ").Append(lb.chunksPerLevel + 1).Append('\n');
+            sb.Append("  urutan: ").Append(lb.Sequence).Append('\n');
+            sb.Append("  terakhir: ").Append(lb.LastNote).Append('\n');
         }
 
         /// <summary>Tulis "label nilai" dengan tanda naik (merah) atau turun (hijau) jika baru berubah.</summary>

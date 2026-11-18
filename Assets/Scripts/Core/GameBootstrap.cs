@@ -1,5 +1,4 @@
 using UnityEngine;
-using Untai.Data;
 using Untai.Level;
 using Untai.Player;
 using Untai.Thread;
@@ -22,29 +21,23 @@ namespace Untai.Core
         void Start()
         {
             EnsureLight();
-            // Sandbox sementara: lantai, lubang, checkpoint, dan goal untuk menguji mekanik.
-            var root = new GameObject("Sandbox").transform;
-            var grey = new Color(0.35f, 0.4f, 0.45f);
-            Prims.Box("Ground A", new Vector3(5f, -0.5f, 0f), new Vector3(14f, 1f, 3f), grey, root);
-            Prims.Box("Ground B", new Vector3(20f, -0.5f, 0f), new Vector3(12f, 1f, 3f), grey, root);
-            Prims.Box("Ground C", new Vector3(36f, -0.5f, 0f), new Vector3(10f, 1f, 3f), grey, root);
-
-            var player = PlayerMotor.CreatePlayer(new Vector3(0f, 1.5f, 0f));
+            var player = PlayerMotor.CreatePlayer(new Vector3(2.5f, 1.2f, 0f));
             var thread = player.gameObject.AddComponent<ThreadController>();
             player.gameObject.AddComponent<ThreadRenderer>();
             var health = player.gameObject.AddComponent<PlayerHealth>();
             player.gameObject.AddComponent<ThreadSwing>();
 
-            Checkpoint.Create(new Vector3(-1f, 0f, 0f), GameplayParameters.Active.threadLength, root).Activate(thread, true);
-            Checkpoint.Create(new Vector3(16f, 0f, 0f), GameplayParameters.Active.threadLength, root);
-            Anchor.Create(new Vector3(28.5f, 4.5f, 0f), root);
-            Goal.Create(new Vector3(38f, 0f, 0f), root);
-            var kill = new GameObject("KillZone").AddComponent<KillZone>();
-            kill.player = health;
-
             gameObject.AddComponent<DDA.PerformanceTracker>();
+            var level = gameObject.AddComponent<LevelBuilder>();
+            level.player = player;
+            level.thread = thread;
+            var kill = gameObject.AddComponent<KillZone>();
+            kill.player = health;
+            kill.killHeight = level.killHeight;
             gameObject.AddComponent<DebugTools.DebugHud>().thread = thread;
             CameraRig.SideFollowCamera.Attach(player.transform);
+
+            level.BuildLevel(12345, 1);
         }
 
         public static void EnsureLight()
