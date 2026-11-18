@@ -20,7 +20,7 @@ namespace Untai.Data
 
         [Header("Benang")]
         [Tooltip("Panjang untai yang mengikat kedua karakter Tandem (satuan dunia).")]
-        public float threadLength = 9f;
+        public float threadLength = 11f;
         [Tooltip("Jangkauan maksimum untuk mengait jangkar.")]
         public float anchorRange = 7f;
 
