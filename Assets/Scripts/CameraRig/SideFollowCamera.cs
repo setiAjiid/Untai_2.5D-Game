@@ -36,11 +36,14 @@ namespace Untai.CameraRig
             return follow;
         }
 
-        public void SetTarget(Transform t)
+        public void SetTarget(Transform t) => SetTarget(t, true);
+
+        /// <summary>Ganti target; snap = false membuat kamera bergeser halus ke target baru.</summary>
+        public void SetTarget(Transform t, bool snap)
         {
             target = t;
             _targetBody = t != null ? t.GetComponent<Rigidbody>() : null;
-            Snap();
+            if (snap) Snap();
         }
 
         public void Snap()

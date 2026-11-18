@@ -5,10 +5,13 @@ using Untai.Data;
 namespace Untai.PCG
 {
     /// <summary>
-    /// Validasi jangkauan (logika murni). Platform dijadikan node graf; sisi i->j ada jika
-    /// pemain bisa melompat (berdasarkan jarak dan tinggi lompat) atau mengayun lewat jangkar
-    /// (berdasarkan jangkauan jangkar dan sisa benang). BFS mencari jalur dari platform masuk
-    /// (platform terakhir chunk sebelumnya) ke platform terakhir chunk kandidat.
+    /// Validasi jangkauan (logika murni). Platform dijadikan node graf; sisi i->j ada jika kedua
+    /// karakter Tandem bisa berpindah dengan:
+    /// - lompat (jarak dan tinggi lompat dari fisika),
+    /// - ayun tandem (satu karakter jadi tumpuan di tepi, yang lain berayun; panjang untai),
+    /// - jangkar (mengait, memanjat untai, berayun; jangkauan jangkar dan panjang untai).
+    /// BFS mencari jalur dari platform masuk (platform terakhir chunk sebelumnya) ke platform
+    /// terakhir chunk kandidat.
     /// </summary>
     public class ReachabilityValidator
     {
@@ -23,6 +26,7 @@ namespace Untai.PCG
 
         public int LastNodeCount { get; private set; }
         public int LastPathLength { get; private set; }
+        /// <summary>Jumlah sisi yang memakai untai (ayun tandem atau jangkar) pada BFS terakhir.</summary>
         public int LastSwingEdges { get; private set; }
 
         readonly List<Node> _nodes = new List<Node>(8);
@@ -48,49 +52,46 @@ namespace Untai.PCG
         }
 
         /// <summary>
-        /// Cek ayunan a->b lewat jangkar: tali dari tepi platform a ke jangkar harus muat dalam
-        /// jangkauan jangkar dan setengah panjang benang; titik terjauh ayunan (simetris pendulum)
-        /// ditambah lontaran saat lepas harus mencapai tepi platform b.
+        /// Ayun tandem a->b: tumpuan di tepi a, karakter lain berayun; jangkauan horizontal
+        /// sqrt(L^2 - dy^2) dengan L = panjang untai x faktor aman. Pasangan menyusul dengan
+        /// menggantung lalu memanjat, sehingga target tidak boleh lebih tinggi dari asal.
         /// </summary>
-        public bool CanSwing(Node a, Node b, List<Vector2> anchors, GameplayParameters p)
+        public bool CanTandemSwing(Node a, Node b, GameplayParameters p)
         {
-            // Tali dibatasi jangkauan jangkar dan sisa benang di tepi platform a.
-            float maxRope = Mathf.Min(p.anchorRange, RemainingThreadAt(a.right));
-            Vector2 start = new Vector2(a.right, a.top + 1f);
+            float gap = b.left - a.right;
+            if (gap <= 0f) return false;
+            if (b.top > a.top + 0.3f) return false;
+            float L = p.threadLength * safety;
+            float dy = a.top - b.top;
+            if (dy >= L) return false;
+            return Mathf.Sqrt(L * L - dy * dy) >= gap + 0.5f;
+        }
+
+        /// <summary>
+        /// Jangkar a->b: jangkar di atas kedua platform yang terjangkau dari a dan dari b
+        /// (jangkauan jangkar dan panjang untai). Berlaku untuk celah maupun dinding tinggi.
+        /// </summary>
+        public bool CanAnchor(Node a, Node b, List<Vector2> anchors, GameplayParameters p)
+        {
+            float maxRope = Mathf.Min(p.anchorRange, p.threadLength * 0.95f);
             for (int i = 0; i < anchors.Count; i++)
             {
                 Vector2 an = anchors[i];
-                if (an.x < a.right - 1f || an.x > b.left + 1f) continue;
-                if (an.y - start.y < 0.5f) continue;
-                float rope = Vector2.Distance(an, start);
-                if (rope > maxRope) continue;
-                float dyB = an.y - (b.top + 1f);
-                if (dyB <= 0f) continue;
-                float horiz = dyB < rope ? Mathf.Sqrt(rope * rope - dyB * dyB) : 0f;
-                float reach = an.x + horiz + p.JumpDistance * 0.4f;
-                if (reach >= b.left + 0.3f) return true;
+                if (an.x < a.left || an.x > b.right) continue;
+                if (an.y < Mathf.Max(a.top, b.top) + 1.5f) continue;
+                var from = new Vector2(Mathf.Clamp(an.x, a.left, a.right), a.top + 1f);
+                var to = new Vector2(Mathf.Clamp(an.x, b.left, b.right), b.top + 1f);
+                if (Vector2.Distance(an, from) <= maxRope && Vector2.Distance(an, to) <= maxRope + 0.5f) return true;
             }
             return false;
         }
 
-        float _budgetX;
-        float _budget;
-
-        /// <summary>Perkiraan sisa benang (dengan faktor aman) pada posisi x.</summary>
-        public float RemainingThreadAt(float x) => (_budget - Mathf.Abs(x - _budgetX)) * 0.9f;
-
         /// <summary>
         /// Validasi chunk kandidat yang diletakkan pada offsetX setelah platform "entry".
-        /// threadBudget = sisa benang di awal chunk (dari checkpoint aktif saat itu).
         /// Mengembalikan null bila lolos, atau alasan penolakan.
         /// </summary>
-        public string Validate(Node entry, ChunkDefinition c, float offsetX, GameplayParameters p, float threadBudget)
+        public string Validate(Node entry, ChunkDefinition c, float offsetX, GameplayParameters p)
         {
-            _budgetX = offsetX;
-            _budget = threadBudget;
-            // Benang harus cukup untuk melintasi chunk dari checkpoint di awal chunk.
-            if (c.width + 2f > p.threadLength * 0.9f) return "lebih panjang dari benang";
-
             _nodes.Clear();
             _nodes.Add(entry);
             for (int i = 0; i < c.platforms.Count && _nodes.Count < _dist.Length; i++)
@@ -108,7 +109,7 @@ namespace Untai.PCG
             _dist[0] = 0;
             _queue.Clear();
             _queue.Enqueue(0);
-            int swingEdges = 0;
+            int ropeEdges = 0;
             while (_queue.Count > 0)
             {
                 int u = _queue.Dequeue();
@@ -116,9 +117,10 @@ namespace Untai.PCG
                 {
                     if (_dist[v] >= 0 || _nodes[v].left < _nodes[u].left) continue;
                     bool jump = CanJump(_nodes[u], _nodes[v], p);
-                    bool swing = !jump && CanSwing(_nodes[u], _nodes[v], _anchors, p);
-                    if (!jump && !swing) continue;
-                    if (swing) swingEdges++;
+                    bool rope = !jump && (CanTandemSwing(_nodes[u], _nodes[v], p) ||
+                                          CanAnchor(_nodes[u], _nodes[v], _anchors, p));
+                    if (!jump && !rope) continue;
+                    if (rope) ropeEdges++;
                     _dist[v] = _dist[u] + 1;
                     _queue.Enqueue(v);
                 }
@@ -126,15 +128,14 @@ namespace Untai.PCG
 
             LastNodeCount = n;
             LastPathLength = _dist[n - 1];
-            LastSwingEdges = swingEdges;
+            LastSwingEdges = ropeEdges;
             if (_dist[n - 1] >= 0) return null;
 
-            // Cari celah yang gagal untuk alasan yang informatif.
             float worst = 0f;
             for (int i = 1; i < n; i++) worst = Mathf.Max(worst, _nodes[i].left - _nodes[i - 1].right);
             return "BFS gagal: celah " + worst.ToString("0.0") + " > lompat " +
-                   (p.JumpDistance * safety).ToString("0.0") + ", tali maks " +
-                   Mathf.Min(p.anchorRange, RemainingThreadAt(offsetX)).ToString("0.0");
+                   (p.JumpDistance * safety).ToString("0.0") + ", untai " + p.threadLength.ToString("0.0") +
+                   ", jangkar " + p.anchorRange.ToString("0.0");
         }
     }
 }

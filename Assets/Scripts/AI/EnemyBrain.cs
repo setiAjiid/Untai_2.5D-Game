@@ -35,6 +35,7 @@ namespace Untai.AI
         public int Id { get; private set; }
         public EnemyState State { get; private set; } = EnemyState.Patrol;
         public float StateTime => Time.time - _stateEnter;
+        /// <summary>Target default; bila ada Tandem, enemy mengincar karakter terdekat.</summary>
         public PlayerHealth Target { get; set; }
 
         [Header("Tampilan (diisi prefab)")]
@@ -177,6 +178,10 @@ namespace Untai.AI
 
         void Update()
         {
+            var tandem = Player.Tandem.Instance;
+            if (tandem != null && tandem.characterA != null && tandem.characterB != null)
+                Target = tandem.ClosestTo(transform.position);
+
             float dt = Time.deltaTime;
             bool sees = CanSeeTarget();
             if (sees) _lastSeen = Time.time;

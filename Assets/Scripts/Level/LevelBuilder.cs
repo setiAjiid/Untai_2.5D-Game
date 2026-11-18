@@ -6,7 +6,6 @@ using Untai.Core;
 using Untai.Data;
 using Untai.PCG;
 using Untai.Player;
-using Untai.Thread;
 
 namespace Untai.Level
 {
@@ -36,12 +35,13 @@ namespace Untai.Level
     {
         public int chunksPerLevel = 8;
         public int lookahead = 2;
-        public float killHeight = -6f;
+        [Tooltip("Di bawah ini karakter mati. Cukup dalam agar karakter bisa menggantung pada untai di jurang.")]
+        public float killHeight = -16f;
 
         public static LevelBuilder Instance { get; private set; }
 
-        public PlayerMotor player;
-        public ThreadController thread;
+        [Tooltip("Pasangan karakter; posisi terdepan dipakai untuk melacak chunk.")]
+        public Tandem tandem;
 
         public int Seed { get; private set; }
         public int LevelNumber { get; private set; }
@@ -104,17 +104,18 @@ namespace Untai.Level
             PlayerChunkIndex = 0;
             EnsureAhead(0);
 
-            if (player != null)
+            if (_firstCheckpoint != null) _firstCheckpoint.Activate(true);
+            if (tandem != null && tandem.characterA != null && tandem.characterB != null)
             {
-                player.TeleportTo(new Vector3(2.5f, 1.2f, 0f));
-                if (thread != null && _firstCheckpoint != null) _firstCheckpoint.Activate(thread, true);
+                tandem.SetFallbackRespawn(new Vector3(2.5f, 1.2f, 0f));
+                tandem.RespawnAll(_firstCheckpoint != null ? _firstCheckpoint.RespawnPoint : new Vector3(2.5f, 1.2f, 0f));
             }
         }
 
         void Update()
         {
-            if (player == null || Chunks.Count == 0) return;
-            float x = player.transform.position.x;
+            if (tandem == null || tandem.characterA == null || tandem.characterB == null || Chunks.Count == 0) return;
+            float x = tandem.LeadX;
             int idx = PlayerChunkIndex;
             while (idx + 1 < Chunks.Count && x >= Chunks[idx + 1].startX) idx++;
             if (idx > PlayerChunkIndex)
@@ -146,9 +147,9 @@ namespace Untai.Level
             var p = GameplayParameters.Active;
             var pick = _assembler.Pick(Seed, index, _prevDef, _prevExit, p, ValidateCandidate);
             // Jalankan ulang untuk chunk terpilih agar info BFS (node, panjang jalur) tercatat.
-            if (!pick.fallback && _validator.Validate(_lastNode, pick.def, _cursorX, p, ThreadBudgetFor(pick.def, p)) == null)
+            if (!pick.fallback && _validator.Validate(_lastNode, pick.def, _cursorX, p) == null)
                 pick.note += " | BFS " + _validator.LastNodeCount + " node, jalur " + _validator.LastPathLength +
-                             (_validator.LastSwingEdges > 0 ? ", ayun " + _validator.LastSwingEdges : "");
+                             (_validator.LastSwingEdges > 0 ? ", untai " + _validator.LastSwingEdges : "");
             Place(pick.def, pick, false);
         }
 
@@ -156,20 +157,14 @@ namespace Untai.Level
         string ValidateCandidate(ChunkDefinition c)
         {
             var p = GameplayParameters.Active;
-            return _validator.Validate(_lastNode, c, _cursorX, p, ThreadBudgetFor(c, p));
+            return _validator.Validate(_lastNode, c, _cursorX, p);
         }
 
         /// <summary>Apakah chunk ini akan diberi checkpoint di awalnya (aturan yang sama dengan Place).</summary>
         bool WouldPlaceCheckpoint(ChunkDefinition def, GameplayParameters p)
         {
-            return _chunksSinceCheckpoint >= p.checkpointInterval
-                   || _distSinceCheckpoint + def.width + 1.5f > _checkpointThread * 0.9f;
-        }
-
-        /// <summary>Sisa benang di awal chunk: dari checkpoint baru, atau sisa dari checkpoint sebelumnya.</summary>
-        float ThreadBudgetFor(ChunkDefinition def, GameplayParameters p)
-        {
-            return WouldPlaceCheckpoint(def, p) ? p.threadLength - 1f : _checkpointThread - _distSinceCheckpoint;
+            // Untai mengikat dua karakter (bukan checkpoint), jadi checkpoint cukup mengikuti interval.
+            return _chunksSinceCheckpoint >= p.checkpointInterval;
         }
 
         BuiltChunk Place(ChunkDefinition def, ChunkAssembler.PickResult pick, bool forceCheckpoint)

@@ -85,6 +85,17 @@ namespace Untai.Core
             }
         }
 
+        /// <summary>Tahan F (gamepad: North) untuk menggulung untai dan menarik pasangan.</summary>
+        public static bool ReelHeld
+        {
+            get
+            {
+                var k = Keyboard.current;
+                var g = Gamepad.current;
+                return (k != null && k.fKey.isPressed) || (g != null && g.buttonNorth.isPressed);
+            }
+        }
+
         public static bool KeyDown(Key key)
         {
             var k = Keyboard.current;

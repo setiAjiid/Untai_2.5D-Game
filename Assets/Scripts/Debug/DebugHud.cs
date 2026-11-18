@@ -4,6 +4,7 @@ using Untai.AI;
 using Untai.Data;
 using Untai.DDA;
 using Untai.Level;
+using Untai.Player;
 using Untai.Thread;
 
 namespace Untai.DebugTools
@@ -18,7 +19,6 @@ namespace Untai.DebugTools
         public static bool Visible = true;
         public float refreshInterval = 0.2f;
 
-        public ThreadController thread;
 
         readonly StringBuilder _sb = new StringBuilder(2048);
         readonly GUIContent _content = new GUIContent("");
@@ -76,11 +76,22 @@ namespace Untai.DebugTools
             sb.Append("  Total: mati ").Append(t.TotalDeaths)
               .Append("  jatuh ").Append(t.TotalFalls)
               .Append("  dmg ").Append(t.TotalDamage)
-              .Append("  | benang@CP ").Append((t.LastCheckpointThreadRatio * 100f).ToString("0")).Append("%\n");
-            if (thread != null)
+              .Append("  | nyawa@CP ").Append((t.LastCheckpointThreadRatio * 100f).ToString("0")).Append("%\n");
+            var tandem = Tandem.Instance;
+            var rope = TandemRope.Instance;
+            if (tandem != null && rope != null && tandem.Active != null)
             {
-                sb.Append("  Benang sisa ").Append(thread.Remaining.ToString("0.0"))
-                  .Append(" / ").Append(thread.maxLength.ToString("0.0")).Append('\n');
+                // Status mekanik Tandem: karakter aktif, untai, dan siapa yang menggantung.
+                sb.Append("  Aktif ").Append(tandem.Active.name)
+                  .Append(" (ganti ").Append(tandem.SwitchCount).Append("x)")
+                  .Append("  untai ").Append(rope.Distance.ToString("0.0"))
+                  .Append(" / ").Append(rope.CurrentLength.ToString("0.0"))
+                  .Append(" maks ").Append(rope.MaxLength.ToString("0.0"))
+                  .Append(rope.IsTaut ? " TEGANG" : " kendur");
+                if (rope.Hooked != null) sb.Append("  [kait jangkar]");
+                else if (rope.Hanging != null) sb.Append("  [").Append(rope.Hanging.name).Append(" menggantung]");
+                if (rope.Reeling) sb.Append("  [menarik]");
+                sb.Append('\n');
             }
         }
 
@@ -127,7 +138,7 @@ namespace Untai.DebugTools
             sb.Append('\n');
             Param(sb, "  agresivitas", p.aggression, o.aggression, "0.00");
             Param(sb, "  checkpoint/", p.checkpointInterval, o.checkpointInterval, "0");
-            Param(sb, "  benang", p.threadLength, o.threadLength, "0.0");
+            Param(sb, "  untai", p.threadLength, o.threadLength, "0.0");
             Param(sb, "jangkar", p.anchorRange, o.anchorRange, "0.0");
             sb.Append('\n');
             Param(sb, "  bobot E", p.easyWeight, o.easyWeight, "0.00");
@@ -164,7 +175,7 @@ namespace Untai.DebugTools
                   .Append("s  jeda ").Append(e0.attackCooldown.ToString("0.0")).Append("s\n");
             }
             // Tampilkan enemy terdekat dari pemain (maksimal 4) beserta state-nya.
-            Vector3 pp = thread != null ? thread.transform.position : Vector3.zero;
+            Vector3 pp = Tandem.Instance != null && Tandem.Instance.Active != null ? Tandem.Instance.Active.transform.position : Vector3.zero;
             int shown = 0;
             for (int i = 0; i < all.Count && shown < 4; i++)
             {

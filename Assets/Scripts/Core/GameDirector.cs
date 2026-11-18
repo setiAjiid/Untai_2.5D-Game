@@ -28,14 +28,19 @@ namespace Untai.Core
         public PrefabLibrary prefabs;
 
         [Header("Referensi scene (opsional; kosong = dibuat otomatis)")]
-        public PlayerMotor player;
+        public PlayerMotor characterA;
+        public PlayerMotor characterB;
+        [Tooltip("Objek dengan komponen Tandem dan TandemRope.")]
+        public TandemRope rope;
         public KillZone killZone;
 
         public static GameDirector Instance { get; private set; }
 
-        public PlayerMotor Player { get; private set; }
-        public PlayerHealth Health { get; private set; }
-        public ThreadController Thread { get; private set; }
+        public Tandem Tandem { get; private set; }
+        public TandemRope Rope { get; private set; }
+        /// <summary>Karakter yang sedang dikendalikan.</summary>
+        public PlayerMotor Player => Tandem != null ? Tandem.Active : null;
+        public PlayerHealth Health => Tandem != null ? Tandem.ActiveHealth : null;
         public PerformanceTracker Tracker { get; private set; }
         public DDAController Dda { get; private set; }
         public LevelBuilder Level { get; private set; }
@@ -54,33 +59,49 @@ namespace Untai.Core
             return c != null ? c : gameObject.AddComponent<T>();
         }
 
+        static PlayerMotor FindCharacter(string name)
+        {
+            var go = GameObject.Find(name);
+            return go != null ? go.GetComponent<PlayerMotor>() : null;
+        }
+
         void Start()
         {
             GameBootstrap.EnsureLight();
 
-            // Pemain dan benang: pakai instance di scene bila ada, jika tidak dari prefab/primitif.
-            Player = player != null ? player : FindAnyObjectByType<PlayerMotor>();
-            if (Player == null) Player = PlayerMotor.Spawn(new Vector3(2.5f, 1.2f, 0f));
-            PlayerMotor.EnsureComponents(Player.gameObject);
-            Thread = Player.GetComponent<ThreadController>();
-            Health = Player.GetComponent<PlayerHealth>();
+            // Dua karakter Tandem: pakai instance di scene bila ada, jika tidak dari prefab/primitif.
+            var a = characterA != null ? characterA : FindCharacter("CharacterA");
+            var b = characterB != null ? characterB : FindCharacter("CharacterB");
+            if (a == null) a = PlayerMotor.Spawn(0, new Vector3(2.5f, 1.2f, 0f));
+            if (b == null) b = PlayerMotor.Spawn(1, new Vector3(1.3f, 1.2f, 0f));
+            PlayerMotor.EnsureComponents(a.gameObject);
+            PlayerMotor.EnsureComponents(b.gameObject);
+
+            // Untai pengikat: objek Tandem + TandemRope.
+            Rope = rope != null ? rope : TandemRope.FindOrCreate();
+            Tandem = Rope.GetComponent<Tandem>();
+            if (Tandem == null) Tandem = Rope.gameObject.AddComponent<Tandem>();
+            Tandem.Bind(a, b);
+            Rope.Bind(Tandem);
 
             // Urutan alur: performa -> DDA -> parameter -> PCG dan AI.
             Tracker = GetOrAdd<PerformanceTracker>();
             Dda = GetOrAdd<DDAController>();
             Level = GetOrAdd<LevelBuilder>();
-            Level.player = Player;
-            Level.thread = Thread;
+            Level.tandem = Tandem;
             Spawner = GetOrAdd<EnemySpawner>();
-            Spawner.Bind(Level, Health);
+            Spawner.Bind(Level, a.GetComponent<PlayerHealth>());
 
             var kill = killZone != null ? killZone : KillZone.FindOrCreate();
-            kill.player = Health;
+            kill.player = a.GetComponent<PlayerHealth>();
             kill.killHeight = Level.killHeight;
 
-            GetOrAdd<DebugTools.DebugHud>().thread = Thread;
+            GetOrAdd<DebugTools.DebugHud>();
             GetOrAdd<DebugTools.DemoHotkeys>();
-            CameraRig.SideFollowCamera.Attach(Player.transform);
+
+            // Kamera mengikuti karakter aktif dan berpindah saat berganti karakter.
+            var cam = CameraRig.SideFollowCamera.Attach(Tandem.Active.transform);
+            Tandem.Switched += m => cam.SetTarget(m.transform, false);
 
             // Parameter awal DDA diterapkan sebelum chunk pertama dirakit.
             Dda.Initialize();
@@ -92,7 +113,7 @@ namespace Untai.Core
         {
             CancelInvoke(nameof(NextLevel));
             _levelComplete = false;
-            Player.InputEnabled = true;
+            Tandem.Locked = false;
             Tracker.BeginLevel();
             Health.ResetFull();
             Level.BuildLevel(seed, levelNumber);
@@ -117,7 +138,7 @@ namespace Untai.Core
         {
             if (_levelComplete) return;
             _levelComplete = true;
-            Player.InputEnabled = false;
+            Tandem.Locked = true;
             Flash("LEVEL " + Level.LevelNumber + " SELESAI!  Lanjut ke level berikutnya...", nextLevelDelay);
             Invoke(nameof(NextLevel), nextLevelDelay);
         }

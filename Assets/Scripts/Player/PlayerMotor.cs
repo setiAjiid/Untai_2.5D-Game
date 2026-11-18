@@ -66,27 +66,29 @@ namespace Untai.Player
 
         public static readonly Color DefaultColor = new Color(0.95f, 0.55f, 0.25f);
 
+        public static readonly Color DefaultColorB = new Color(0.25f, 0.75f, 0.85f);
+
         /// <summary>
-        /// Buat pemain dari prefab PrefabLibrary (fallback primitif), lalu pastikan semua komponen
-        /// pemain dan benang ada.
+        /// Buat karakter Tandem (indeks 0 = A, 1 = B) dari prefab PrefabLibrary, atau primitif bila kosong.
         /// </summary>
-        public static PlayerMotor Spawn(Vector3 position)
+        public static PlayerMotor Spawn(int index, Vector3 position)
         {
             PlayerMotor m = null;
-            var prefab = PrefabLibrary.Get(l => l.player);
+            var prefab = PrefabLibrary.Get(index == 0 ? (System.Func<PrefabLibrary, GameObject>)(l => l.characterA) : l => l.characterB);
             if (prefab != null) m = Prims.Spawn(prefab, position, null).GetComponent<PlayerMotor>();
-            if (m == null) m = CreatePlayer(position);
+            if (m == null)
+            {
+                m = CreatePlayer(position, index == 0 ? DefaultColor : DefaultColorB);
+                m.name = index == 0 ? "CharacterA" : "CharacterB";
+            }
             EnsureComponents(m.gameObject);
             return m;
         }
 
-        /// <summary>Tambahkan komponen yang belum ada (urutan: benang, render benang, nyawa, ayunan).</summary>
+        /// <summary>Tambahkan komponen karakter yang belum ada.</summary>
         public static void EnsureComponents(GameObject go)
         {
-            if (go.GetComponent<Thread.ThreadController>() == null) go.AddComponent<Thread.ThreadController>();
-            if (go.GetComponent<Thread.ThreadRenderer>() == null) go.AddComponent<Thread.ThreadRenderer>();
             if (go.GetComponent<PlayerHealth>() == null) go.AddComponent<PlayerHealth>();
-            if (go.GetComponent<Thread.ThreadSwing>() == null) go.AddComponent<Thread.ThreadSwing>();
         }
 
         void Update()
@@ -156,9 +158,11 @@ namespace Untai.Player
         }
 
         /// <summary>Versi primitif dari kode: kapsul + Rigidbody + PlayerMotor (fallback, juga dipakai generator prefab).</summary>
-        public static PlayerMotor CreatePlayer(Vector3 position)
+        public static PlayerMotor CreatePlayer(Vector3 position) => CreatePlayer(position, DefaultColor);
+
+        public static PlayerMotor CreatePlayer(Vector3 position, Color color)
         {
-            var go = Prims.Create(PrimitiveType.Capsule, "Player", position, Vector3.one, DefaultColor, null);
+            var go = Prims.Create(PrimitiveType.Capsule, "Player", position, Vector3.one, color, null);
             // "Mata" kecil supaya arah hadap terlihat.
             Prims.Create(PrimitiveType.Sphere, "Eye", position + new Vector3(0.3f, 0.45f, -0.35f),
                 Vector3.one * 0.22f, Color.white, go.transform, false);

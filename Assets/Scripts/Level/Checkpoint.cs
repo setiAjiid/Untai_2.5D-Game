@@ -1,19 +1,20 @@
 using UnityEngine;
 using Untai.Core;
 using Untai.Data;
-using Untai.Thread;
+using Untai.Player;
 
 namespace Untai.Level
 {
     /// <summary>
-    /// Checkpoint berupa tiang gulungan benang. Saat disentuh, titik tambat benang
-    /// pindah ke sini dan benang pulih sepanjang threadLength (diisi oleh PCG).
+    /// Checkpoint berupa tiang gulungan untai: titik respawn kedua karakter Tandem.
+    /// Aktif saat disentuh salah satu karakter. threadLength dicatat dari parameter saat
+    /// chunk dirakit (informasi PCG), sedangkan panjang untai di game dibaca dari parameter aktif.
     /// </summary>
     public class Checkpoint : MonoBehaviour
     {
         public float threadLength = 20f;
-        [Tooltip("Tinggi titik tambat benang di atas dasar checkpoint.")]
-        public float tetherHeight = 1f;
+        [Tooltip("Tinggi titik respawn di atas dasar checkpoint.")]
+        public float tetherHeight = 1.2f;
         [Tooltip("Renderer gulungan yang berganti warna saat aktif.")]
         public Renderer spool;
         public Material idleMaterial;
@@ -26,7 +27,7 @@ namespace Untai.Level
         public static readonly Color DefaultActiveColor = new Color(0.3f, 0.95f, 0.45f);
         public static readonly Color PoleColor = new Color(0.4f, 0.3f, 0.2f);
 
-        public Vector3 TetherPoint => transform.position + Vector3.up * tetherHeight;
+        public Vector3 RespawnPoint => transform.position + new Vector3(0.6f, tetherHeight, 0f);
 
         /// <summary>Buat checkpoint dari prefab PrefabLibrary, atau primitif bila prefab kosong.</summary>
         public static Checkpoint Create(Vector3 groundPos, float threadLength, Transform parent)
@@ -63,19 +64,23 @@ namespace Untai.Level
 
         void OnTriggerEnter(Collider other)
         {
-            var thread = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<ThreadController>() : null;
-            if (thread != null) Activate(thread);
+            var motor = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerMotor>() : null;
+            if (motor != null) Activate();
         }
 
-        public void Activate(ThreadController thread, bool silent = false)
+        /// <summary>Jadikan checkpoint aktif. Rasio yang dilaporkan ke DDA = rata-rata nyawa Tandem.</summary>
+        public void Activate(bool silent = false)
         {
             if (IsActive) return;
-            float ratioBefore = thread.RemainingRatio;
+            float ratio = 1f;
+            var t = Tandem.Instance;
+            if (t != null && t.characterA != null && t.characterB != null)
+                ratio = (t.characterA.GetComponent<PlayerHealth>().HealthRatio +
+                         t.characterB.GetComponent<PlayerHealth>().HealthRatio) * 0.5f;
             if (Active != null && Active != this) Active.SetActiveVisual(false);
             Active = this;
             SetActiveVisual(true);
-            thread.SetTether(TetherPoint, threadLength);
-            if (!silent) GameEvents.RaiseCheckpointReached(transform.position, ratioBefore);
+            if (!silent) GameEvents.RaiseCheckpointReached(transform.position, ratio);
         }
 
         void SetActiveVisual(bool on)

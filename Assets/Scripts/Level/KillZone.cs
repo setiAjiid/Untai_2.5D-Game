@@ -32,7 +32,16 @@ namespace Untai.Level
 
         void Update()
         {
-            if (useHeightCheck && player != null && player.transform.position.y < killHeight)
+            if (!useHeightCheck) return;
+            // Dengan Tandem, kedua karakter diperiksa; salah satu jatuh = keduanya respawn.
+            var t = Tandem.Instance;
+            if (t != null && t.characterA != null && t.characterB != null)
+            {
+                if (t.characterA.transform.position.y < killHeight) t.characterA.GetComponent<PlayerHealth>().Die(DeathCause.Fall);
+                else if (t.characterB.transform.position.y < killHeight) t.characterB.GetComponent<PlayerHealth>().Die(DeathCause.Fall);
+                return;
+            }
+            if (player != null && player.transform.position.y < killHeight)
                 player.Die(DeathCause.Fall);
         }
 

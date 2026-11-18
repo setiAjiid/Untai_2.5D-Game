@@ -85,9 +85,9 @@ namespace Untai.DebugTools
             BuiltChunk c = lb.Chunks[next];
             float top = c.def.platforms[0].top;
             var cp = FindCheckpointIn(c);
-            if (cp != null) cp.Activate(_director.Thread);
-            else _director.Thread.SetTether(new Vector3(c.startX + 1f, top + 1f, 0f), _director.Thread.maxLength);
-            _director.Player.TeleportTo(new Vector3(c.startX + 1.5f, top + 1.2f, 0f));
+            if (cp != null) cp.Activate();
+            // Pindahkan kedua karakter Tandem ke awal chunk berikutnya.
+            _director.Tandem.RespawnAll(new Vector3(c.startX + 2.5f, top + 1.2f, 0f));
         }
 
         static Checkpoint FindCheckpointIn(BuiltChunk c)
@@ -113,7 +113,7 @@ namespace Untai.DebugTools
             GUI.Box(r, GUIContent.none);
             GUI.Label(new Rect(16f, r.y + 4f, r.width - 16f, 18f), Legend, _style);
             GUI.Label(new Rect(16f, r.y + 21f, r.width - 16f, 18f),
-                "Main: A/D gerak, Space lompat, tahan Shift/J dekat jangkar (bola biru) untuk mengayun, W/S gulung/ulur, Space lepas", _style);
+                "Main: A/D gerak, Space lompat, Tab/Q ganti karakter, tahan Shift/J = kait jangkar, W/S panjat untai, tahan F = tarik pasangan", _style);
         }
     }
 }

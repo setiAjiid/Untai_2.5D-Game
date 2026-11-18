@@ -69,6 +69,7 @@ namespace Untai.EditorTools
 
             // Material: satu per warna yang dipakai sekarang.
             var mPlayer = Mat("M_Player", PlayerMotor.DefaultColor);
+            var mPlayerB = Mat("M_PlayerB", PlayerMotor.DefaultColorB);
             var mWhite = Mat("M_White", Color.white);
             var mBlack = Mat("M_Black", Color.black);
             var mPatrol = Mat("M_EnemyPatrol", EnemyBrain.StateColor(EnemyState.Patrol));
@@ -89,16 +90,9 @@ namespace Untai.EditorTools
             var noFriction = PhysicsMat("PM_PlayerNoFriction");
 
             // Prefab karakter.
-            var player = MakePrefab(CharacterDir + "/Player.prefab", () =>
-            {
-                var m = PlayerMotor.CreatePlayer(Vector3.zero);
-                PlayerMotor.EnsureComponents(m.gameObject);
-                m.GetComponent<CapsuleCollider>().sharedMaterial = noFriction;
-                SetMat(m.gameObject, mPlayer);
-                SetMat(m.transform.Find("Eye"), mWhite);
-                m.GetComponent<ThreadRenderer>().lineMaterial = mThread;
-                return m.gameObject;
-            });
+            // Dua karakter Tandem (beda warna); model dummy kapsul bisa diganti per prefab.
+            var characterA = MakePrefab(CharacterDir + "/CharacterA.prefab", () => BuildCharacter("CharacterA", mPlayer, mWhite, noFriction));
+            var characterB = MakePrefab(CharacterDir + "/CharacterB.prefab", () => BuildCharacter("CharacterB", mPlayerB, mWhite, noFriction));
 
             var enemy = MakePrefab(CharacterDir + "/Enemy.prefab", () =>
             {
@@ -166,6 +160,20 @@ namespace Untai.EditorTools
                 return a.gameObject;
             });
 
+            // Untai pengikat: Tandem + TandemRope + LineRenderer.
+            var tandem = MakePrefab(ThreadDir + "/Tandem.prefab", () =>
+            {
+                var go = new GameObject("Tandem");
+                go.AddComponent<Tandem>();
+                var lr = go.AddComponent<LineRenderer>();
+                lr.sharedMaterial = mThread;
+                lr.widthMultiplier = 0.08f;
+                var rope = go.AddComponent<TandemRope>();
+                rope.line = lr;
+                rope.lineMaterial = mThread;
+                return go;
+            });
+
             // PrefabLibrary: buat bila belum ada, isi hanya slot yang kosong.
             var lib = AssetDatabase.LoadAssetAtPath<PrefabLibrary>(LibraryPath);
             if (lib == null)
@@ -174,7 +182,9 @@ namespace Untai.EditorTools
                 lib = ScriptableObject.CreateInstance<PrefabLibrary>();
                 AssetDatabase.CreateAsset(lib, LibraryPath);
             }
-            if (lib.player == null) lib.player = player;
+            if (lib.characterA == null) lib.characterA = characterA;
+            if (lib.characterB == null) lib.characterB = characterB;
+            if (lib.tandem == null) lib.tandem = tandem;
             if (lib.enemy == null) lib.enemy = enemy;
             if (lib.platform == null) lib.platform = platform;
             if (lib.checkpoint == null) lib.checkpoint = checkpoint;
@@ -207,21 +217,24 @@ namespace Untai.EditorTools
             director.parameters = AssetDatabase.LoadAssetAtPath<GameplayParameters>(ParametersPath);
             director.prefabs = lib;
 
-            // Player: instance prefab.
-            var player = Object.FindAnyObjectByType<PlayerMotor>();
-            if (player == null && lib.player != null)
+            // Hapus objek pemain lama (versi satu karakter) bila masih ada.
+            foreach (var old in Object.FindObjectsByType<PlayerMotor>(FindObjectsSortMode.None))
+                if (old.name != "CharacterA" && old.name != "CharacterB") Object.DestroyImmediate(old.gameObject);
+
+            // Dua karakter Tandem dan objek untai: instance prefab.
+            var a = FindOrInstantiate<PlayerMotor>("CharacterA", lib.characterA, scene, new Vector3(2.5f, 1.2f, 0f));
+            var b = FindOrInstantiate<PlayerMotor>("CharacterB", lib.characterB, scene, new Vector3(1.3f, 1.2f, 0f));
+            var rope = FindOrInstantiate<TandemRope>("Tandem", lib.tandem, scene, Vector3.zero);
+            director.characterA = a;
+            director.characterB = b;
+            director.rope = rope;
+            if (rope != null)
             {
-                var go = (GameObject)PrefabUtility.InstantiatePrefab(lib.player, scene);
-                go.transform.position = new Vector3(2.5f, 1.2f, 0f);
-                player = go.GetComponent<PlayerMotor>();
+                var t = rope.GetComponent<Tandem>();
+                if (t != null) { t.characterA = a; t.characterB = b; }
+                level.tandem = t;
             }
-            if (player != null)
-            {
-                director.player = player;
-                level.player = player;
-                level.thread = player.GetComponent<ThreadController>();
-                hud.thread = level.thread;
-            }
+            var player = a;
 
             // KillZone: instance prefab.
             var kill = Object.FindAnyObjectByType<KillZone>();
@@ -273,11 +286,13 @@ namespace Untai.EditorTools
             {
                 if (o == null) { missing++; Debug.LogError("[Untai] Kosong: " + name); }
             }
-            Check("player", lib.player); Check("enemy", lib.enemy); Check("platform", lib.platform);
+            Check("characterA", lib.characterA); Check("characterB", lib.characterB); Check("tandem", lib.tandem);
+            Check("enemy", lib.enemy); Check("platform", lib.platform);
             Check("checkpoint", lib.checkpoint); Check("goal", lib.goal); Check("killZone", lib.killZone);
             Check("trap", lib.trap); Check("anchor", lib.anchor);
-            Check("Player.PlayerMotor", lib.player != null ? lib.player.GetComponent<PlayerMotor>() : null);
-            Check("Player.ThreadSwing", lib.player != null ? lib.player.GetComponent<ThreadSwing>() : null);
+            Check("CharacterA.PlayerMotor", lib.characterA != null ? lib.characterA.GetComponent<PlayerMotor>() : null);
+            Check("CharacterB.PlayerHealth", lib.characterB != null ? lib.characterB.GetComponent<PlayerHealth>() : null);
+            Check("Tandem.TandemRope", lib.tandem != null ? lib.tandem.GetComponent<TandemRope>() : null);
             Check("Enemy.EnemyBrain", lib.enemy != null ? lib.enemy.GetComponent<EnemyBrain>() : null);
             Check("Platform.PlatformVisual", lib.platform != null ? lib.platform.GetComponent<PlatformVisual>() : null);
             foreach (var r in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
@@ -286,6 +301,29 @@ namespace Untai.EditorTools
         }
 
         // ------------------------------------------------------------------ helper
+
+        static GameObject BuildCharacter(string name, Material body, Material eye, PhysicsMaterial noFriction)
+        {
+            var m = PlayerMotor.CreatePlayer(Vector3.zero);
+            m.name = name;
+            PlayerMotor.EnsureComponents(m.gameObject);
+            m.GetComponent<CapsuleCollider>().sharedMaterial = noFriction;
+            SetMat(m.gameObject, body);
+            SetMat(m.transform.Find("Eye"), eye);
+            return m.gameObject;
+        }
+
+        /// <summary>Pakai objek scene bernama "name" bila ada, jika tidak instansiasi prefab.</summary>
+        static T FindOrInstantiate<T>(string name, GameObject prefab, Scene scene, Vector3 position) where T : Component
+        {
+            var existing = GameObject.Find(name);
+            if (existing != null && existing.GetComponent<T>() != null) return existing.GetComponent<T>();
+            if (prefab == null) return null;
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            go.name = name;
+            go.transform.position = position;
+            return go.GetComponent<T>();
+        }
 
         static T GetOrAdd<T>(GameObject go) where T : Component
         {

@@ -1,35 +1,45 @@
+using System;
 using UnityEngine;
 using Untai.Core;
-using Untai.Thread;
 
 namespace Untai.Player
 {
     /// <summary>
-    /// Nyawa pemain, damage dengan knockback dan kebal sesaat, serta respawn
-    /// ke checkpoint terakhir (titik tambat benang).
+    /// Nyawa satu karakter: damage dengan knockback dan kebal sesaat. Saat mati, respawn
+    /// diserahkan ke RespawnHandler (Tandem: kedua karakter respawn bersama di checkpoint).
     /// </summary>
-    [RequireComponent(typeof(PlayerMotor), typeof(ThreadController))]
+    [RequireComponent(typeof(PlayerMotor))]
     public class PlayerHealth : MonoBehaviour
     {
         public int maxHealth = 3;
         public float invulnerableTime = 1.0f;
 
         public int Health { get; private set; }
+        public float HealthRatio => maxHealth > 0 ? Health / (float)maxHealth : 0f;
         public bool IsInvulnerable => Time.time < _invulnerableUntil;
 
-        PlayerMotor _motor;
-        ThreadController _thread;
-        float _invulnerableUntil;
-        float _lastDeathTime = -10f;
-        Renderer _renderer;
+        /// <summary>Penanganan respawn global (diisi Tandem). Null = respawn sendiri di checkpoint.</summary>
+        public static Action<PlayerHealth> RespawnHandler;
 
-        /// <summary>Dipanggil sebelum respawn (misal untuk melepas ayunan).</summary>
-        public event System.Action BeforeRespawn;
+        PlayerMotor _motor;
+        float _invulnerableUntil;
+        Renderer _renderer;
+        // Dibagi antar karakter: dua karakter jatuh bersamaan dihitung satu kematian.
+        static float s_LastDeathTime = -10f;
+
+        /// <summary>Dipanggil sebelum respawn.</summary>
+        public event Action BeforeRespawn;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            RespawnHandler = null;
+            s_LastDeathTime = -10f;
+        }
 
         void Awake()
         {
             _motor = GetComponent<PlayerMotor>();
-            _thread = GetComponent<ThreadController>();
             _renderer = GetComponent<Renderer>();
             Health = maxHealth;
         }
@@ -59,18 +69,30 @@ namespace Untai.Player
 
         public void Die(DeathCause cause)
         {
-            if (Time.time - _lastDeathTime < 0.25f) return; // cegah kematian ganda dalam satu momen
-            _lastDeathTime = Time.time;
+            if (Time.time - s_LastDeathTime < 0.25f) return; // cegah kematian ganda dalam satu momen
+            s_LastDeathTime = Time.time;
             GameEvents.RaisePlayerDied(cause);
             Respawn();
         }
 
         public void Respawn()
         {
+            if (RespawnHandler != null)
+            {
+                RespawnHandler(this);
+                return;
+            }
+            var cp = Level.Checkpoint.Active;
+            _motor.TeleportTo(cp != null ? cp.RespawnPoint : transform.position + Vector3.up);
+            ResetAfterRespawn();
+        }
+
+        /// <summary>Pulihkan nyawa dan beri kebal sesaat setelah respawn.</summary>
+        public void ResetAfterRespawn()
+        {
             BeforeRespawn?.Invoke();
             Health = maxHealth;
             _invulnerableUntil = Time.time + invulnerableTime;
-            _motor.TeleportTo(_thread.TetherPoint + Vector3.up * 1.2f);
         }
 
         public void ResetFull()

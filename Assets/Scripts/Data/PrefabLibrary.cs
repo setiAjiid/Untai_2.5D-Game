@@ -14,7 +14,11 @@ namespace Untai.Data
         public const string ResourcePath = "Untai/PrefabLibrary";
 
         [Header("Karakter")]
-        public GameObject player;
+        [Tooltip("Karakter pertama Tandem (aktif saat mulai).")]
+        [UnityEngine.Serialization.FormerlySerializedAs("player")]
+        public GameObject characterA;
+        [Tooltip("Karakter kedua Tandem.")]
+        public GameObject characterB;
         public GameObject enemy;
 
         [Header("Level")]
@@ -27,6 +31,8 @@ namespace Untai.Data
 
         [Header("Benang")]
         public GameObject anchor;
+        [Tooltip("Objek Tandem + TandemRope (untai pengikat kedua karakter).")]
+        public GameObject tandem;
 
         [Header("Ukuran dasar platform")]
         [Tooltip("Ketebalan platform pada sumbu Z.")]
