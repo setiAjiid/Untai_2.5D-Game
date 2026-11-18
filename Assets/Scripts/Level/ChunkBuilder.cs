@@ -28,6 +28,20 @@ namespace Untai.Level
 
         static readonly List<int> s_Indices = new List<int>(8);
 
+        /// <summary>Posisi relatif (0..1) enemy ke-k pada platformnya: disebar merata bila berbagi platform.</summary>
+        static float SpreadT(ChunkDefinition def, List<int> order, int k, int count)
+        {
+            int plat = def.enemySpawns[order[k]].platform;
+            int same = 0, rank = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (def.enemySpawns[order[i]].platform != plat) continue;
+                if (i < k) rank++;
+                same++;
+            }
+            return same <= 1 ? 0.6f : Mathf.Lerp(0.35f, 0.9f, rank / (float)(same - 1));
+        }
+
         public static Transform Build(ChunkDefinition def, float offsetX, Transform parent, float trapDensity,
             int enemyCount, int seed, List<EnemySpawnInfo> enemyOut, out int trapCount)
         {
@@ -80,7 +94,8 @@ namespace Untai.Level
                 float left = offsetX + plat.x, right = offsetX + plat.Right;
                 enemyOut.Add(new EnemySpawnInfo
                 {
-                    position = new Vector3(Mathf.Lerp(left, right, 0.6f), plat.top + 1f, 0f),
+                    // Beberapa enemy di platform yang sama disebar agar tidak bertumpuk di satu titik.
+                    position = new Vector3(Mathf.Lerp(left, right, SpreadT(def, s_Indices, k, count)), plat.top + 1f, 0f),
                     minX = left + 0.5f,
                     maxX = right - 0.5f
                 });
