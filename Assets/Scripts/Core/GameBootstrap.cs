@@ -1,4 +1,5 @@
 using UnityEngine;
+using Untai.Data;
 using Untai.Level;
 using Untai.Player;
 using Untai.Thread;
@@ -34,8 +35,8 @@ namespace Untai.Core
             var health = player.gameObject.AddComponent<PlayerHealth>();
             player.gameObject.AddComponent<ThreadSwing>();
 
-            Checkpoint.Create(new Vector3(-1f, 0f, 0f), 20f, root).Activate(thread, true);
-            Checkpoint.Create(new Vector3(16f, 0f, 0f), 24f, root);
+            Checkpoint.Create(new Vector3(-1f, 0f, 0f), GameplayParameters.Active.threadLength, root).Activate(thread, true);
+            Checkpoint.Create(new Vector3(16f, 0f, 0f), GameplayParameters.Active.threadLength, root);
             Anchor.Create(new Vector3(28.5f, 4.5f, 0f), root);
             Goal.Create(new Vector3(38f, 0f, 0f), root);
             var kill = new GameObject("KillZone").AddComponent<KillZone>();

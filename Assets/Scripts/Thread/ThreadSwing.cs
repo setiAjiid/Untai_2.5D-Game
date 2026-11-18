@@ -1,5 +1,6 @@
 using UnityEngine;
 using Untai.Core;
+using Untai.Data;
 using Untai.Player;
 
 namespace Untai.Thread
@@ -16,7 +17,8 @@ namespace Untai.Thread
     [RequireComponent(typeof(PlayerMotor), typeof(ThreadController))]
     public class ThreadSwing : MonoBehaviour
     {
-        public float anchorRange = 7f;
+        /// <summary>Jangkauan jangkar dibaca dari GameplayParameters.Active.</summary>
+        public float AnchorRange => GameplayParameters.Active.anchorRange;
         public float swingForce = 16f;
         public float reelSpeed = 4f;
         public float minRope = 1.5f;
@@ -59,7 +61,7 @@ namespace Untai.Thread
             Anchor best = null;
             float bestDist = float.MaxValue;
             Vector3 p = transform.position;
-            float maxReach = Mathf.Min(anchorRange, _thread.Remaining);
+            float maxReach = Mathf.Min(AnchorRange, _thread.Remaining);
             var all = Anchor.All;
             for (int i = 0; i < all.Count; i++)
             {
@@ -119,7 +121,7 @@ namespace Untai.Thread
             Vector3 v = body.linearVelocity;
 
             // Gulung/ulur tali, dibatasi jangkauan jangkar.
-            _rope = Mathf.Clamp(_rope - InputReader.Vertical * reelSpeed * dt, minRope, anchorRange);
+            _rope = Mathf.Clamp(_rope - InputReader.Vertical * reelSpeed * dt, minRope, AnchorRange);
 
             Vector3 d = p - a;
             float dist = d.magnitude;

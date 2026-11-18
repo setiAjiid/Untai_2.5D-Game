@@ -24,5 +24,13 @@ namespace Untai.Core
         public static void RaiseCheckpointReached(Vector3 pos, float ratio) => CheckpointReached?.Invoke(pos, ratio);
         public static void RaiseChunkEntered(int index) => ChunkEntered?.Invoke(index);
         public static void RaiseGoalReached() => GoalReached?.Invoke();
+
+        // Bersihkan pendengar saat Play dimulai (aman bila Domain Reload dimatikan).
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            PlayerDied = null; PlayerDamaged = null; CheckpointReached = null;
+            ChunkEntered = null; GoalReached = null;
+        }
     }
 }

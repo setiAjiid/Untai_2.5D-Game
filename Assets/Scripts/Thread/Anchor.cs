@@ -22,6 +22,9 @@ namespace Untai.Thread
             return a;
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => All.Clear();
+
         void OnEnable() => All.Add(this);
         void OnDisable() => All.Remove(this);
 

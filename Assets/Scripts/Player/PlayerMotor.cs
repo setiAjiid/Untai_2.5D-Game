@@ -1,5 +1,6 @@
 using UnityEngine;
 using Untai.Core;
+using Untai.Data;
 
 namespace Untai.Player
 {
@@ -10,14 +11,16 @@ namespace Untai.Player
     [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
     public class PlayerMotor : MonoBehaviour
     {
+        // Kecepatan, lompat, dan gravitasi dibaca dari GameplayParameters.Active.
+        float moveSpeed => GameplayParameters.Active.moveSpeed;
+        float jumpVelocity => GameplayParameters.Active.jumpVelocity;
+        float gravityMultiplier => GameplayParameters.Active.gravityMultiplier;
+
         [Header("Gerak")]
-        public float moveSpeed = 6f;
         public float groundAcceleration = 70f;
         public float airAcceleration = 35f;
 
         [Header("Lompat")]
-        public float jumpVelocity = 11f;
-        public float gravityMultiplier = 2.5f;
         [Tooltip("Gravitasi tambahan saat tombol lompat dilepas ketika naik (lompat variabel).")]
         public float lowJumpMultiplier = 2f;
         public float coyoteTime = 0.12f;
@@ -105,20 +108,6 @@ namespace Untai.Player
                 return hit.normal.y > 0.5f && Body.linearVelocity.y <= 0.5f;
             }
             return false;
-        }
-
-        /// <summary>Jarak lompat horizontal maksimum di tanah datar (dipakai validator PCG).</summary>
-        public static float EstimateJumpDistance(float speed, float jumpVel, float gravityMul)
-        {
-            float g = Mathf.Abs(Physics.gravity.y) * gravityMul;
-            return speed * (2f * jumpVel / g);
-        }
-
-        /// <summary>Tinggi lompat maksimum.</summary>
-        public static float EstimateJumpHeight(float jumpVel, float gravityMul)
-        {
-            float g = Mathf.Abs(Physics.gravity.y) * gravityMul;
-            return jumpVel * jumpVel / (2f * g);
         }
 
         public void TeleportTo(Vector3 position)
