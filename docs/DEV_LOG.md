@@ -161,6 +161,34 @@ Satu entri per fase: tujuan, file utama, dan keputusan penting.
    `Checkpoint.spool`, `PlatformVisual.targetRenderer`.
 4. Simpan prefab; perubahan langsung terpakai saat Play karena builder runtime meng-Instantiate prefab ini.
 
+## Fase 9: Mekanik Tandem (branch `feat/tandem-thread`)
+
+- **Tujuan:** benang menjadi mekanik utama, bukan sekadar batas jarak dari checkpoint. Dua karakter
+  terikat satu untai, dimainkan satu orang dengan berganti karakter.
+- **Alasan:** pada versi demo pertama brief meminta mekanik benang sesederhana mungkin karena penilaian
+  difokuskan pada PCG, DDA, dan AI; hasilnya permainan terasa hanya lompat, hindar, dan menuju goal.
+- **File utama:** `Player/Tandem.cs`, `Thread/TandemRope.cs`, `PCG/ChunkLibrary.cs`,
+  `PCG/ReachabilityValidator.cs`, `Core/GameDirector.cs`, `Editor/PrefabBuilder.cs`.
+- **Keputusan:**
+  - `Tandem` memegang CharacterA dan CharacterB; Tab/Q mengganti karakter aktif. Karakter tidak aktif
+    diam (input mati) sehingga bisa menjadi tumpuan. Salah satu mati = keduanya respawn di checkpoint.
+  - `TandemRope` menentukan tiap langkah fisika siapa tumpuan dan siapa yang bergerak:
+    karakter di tanah menjadi tumpuan, karakter di udara tertahan untai dan berayun (pendulum batasan
+    jarak, sama seperti ayunan jangkar sebelumnya). Saat menggantung: W/S memanjat, A/D memompa ayunan,
+    Space melompat dari untai. Tahan F menggulung untai sehingga pasangan tertarik. Kait jangkar membuat
+    untai lewat jangkar: panjang tali karakter aktif = panjang untai - jarak pasangan ke jangkar.
+  - Checkpoint kini hanya titik respawn bersama; metrik sumber daya untuk DDA diganti rata-rata nyawa
+    kedua karakter saat mencapai checkpoint.
+  - `threadLength` di GameplayParameters berarti panjang untai Tandem (DDA: 10 mudah sampai 8 sulit).
+  - Validator BFS punya tiga jenis sisi: lompat, ayun tandem (`sqrt(L^2 - dy^2) >= celah`, target tidak
+    lebih tinggi), dan jangkar (jangkar terjangkau dari kedua platform dalam jangkauan jangkar dan untai).
+  - 14 chunk baru; 8 di antaranya tidak bisa diselesaikan hanya dengan lompat (tebing 3 sampai 3,5 m,
+    jurang 6 sampai 7 m). Kelayakan semua chunk diuji dengan skrip hitung untuk seluruh rentang
+    parameter DDA. Aset chunk disimpan di `Resources/Untai/TandemChunks` agar aset versi lama tidak termuat.
+  - Kill height diturunkan ke -16 agar karakter bisa menggantung di jurang tanpa dianggap jatuh.
+  - Enemy mengincar karakter terdekat dari keduanya.
+  - Terinspirasi game bertema dua karakter terikat benang; nama, level, dan visual tetap milik Untai.
+
 ---
 
 ## Alur Sistem
@@ -191,11 +219,13 @@ HUD menampilkan alur ini sebagai panel bernomor [1] Performance, [2] DDA, [3] Pa
 
 | Tombol | Fungsi |
 |---|---|
-| A/D atau panah | Gerak |
-| Space | Lompat (tahan untuk lompat lebih tinggi); saat mengayun: lepas dengan dorongan |
-| Tahan Shift atau J | Kaitkan benang ke jangkar terdekat (bola biru menyala kuning bila terjangkau) |
-| W/S | Gulung/ulur tali saat mengayun |
-| R | Respawn di checkpoint terakhir |
+| A/D atau panah | Gerak; saat menggantung: memompa ayunan |
+| Space | Lompat; saat menggantung: lompat dari untai; saat mengait jangkar: lepas dengan dorongan |
+| Tab / Q | Ganti karakter aktif (Tandem) |
+| W/S | Panjat / turuni untai saat menggantung |
+| Tahan F | Tarik pasangan (gulung untai) |
+| Tahan Shift atau J | Kaitkan untai ke jangkar terdekat (bola biru menyala kuning bila terjangkau) |
+| R | Respawn keduanya di checkpoint terakhir |
 | F1 | Tampilkan/sembunyikan HUD |
 | F2 | Simulasi pemain mati |
 | F3 | Simulasi performa bagus (chunk sempurna) |

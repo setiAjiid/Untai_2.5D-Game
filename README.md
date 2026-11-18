@@ -16,8 +16,10 @@ Prototipe platformer 2.5D untuk **Project EAS mata kuliah Game Cerdas**, kelompo
 ## Konsep
 
 Platformer 2.5D: model dan kamera 3D, gerak hanya di bidang X dan Y (sumbu Z dikunci).
-Pemain membawa **benang** berpanjang terbatas yang terikat pada checkpoint terakhir dan dapat
-dipakai untuk **mengayun dari jangkar** melewati celah. Level dirakit otomatis dari **chunk**
+Pemain mengendalikan **dua karakter (Tandem) yang terikat satu untai**, dimainkan satu orang dengan
+berganti karakter (Tab/Q). Untai adalah mekanik utama: karakter yang berdiri menjadi **tumpuan**
+sehingga pasangannya bisa **menggantung dan berayun** menyeberangi jurang, **memanjat untai**,
+**menarik pasangan**, atau **mengait jangkar** untuk naik ke tebing. Level dirakit otomatis dari **chunk**
 berdasarkan **seed** (PCG), tingkat kesulitan disesuaikan oleh **DDA** dari performa pemain,
 dan **enemy** memiliki AI (FSM) yang agresivitasnya dipengaruhi DDA.
 
@@ -35,8 +37,8 @@ berupa primitif (kapsul dan kubus) sebagai placeholder.
 
 | Modul | Folder | Peran |
 |---|---|---|
-| Player | `Assets/Scripts/Player` | Gerak samping, lompat variabel, nyawa, respawn |
-| Thread | `Assets/Scripts/Thread` | Sumber daya benang, render benang, ayunan jangkar |
+| Player | `Assets/Scripts/Player` | Gerak samping, lompat variabel, nyawa, `Tandem` (dua karakter, ganti karakter, respawn bersama) |
+| Thread | `Assets/Scripts/Thread` | `TandemRope` (untai pengikat: tumpuan, ayun, panjat, tarik, kait jangkar, render) dan `Anchor` |
 | Level | `Assets/Scripts/Level` | Checkpoint, kill zone, goal, jebakan, `LevelBuilder`/`ChunkBuilder` (instansiasi prefab per chunk) |
 | PCG | `Assets/Scripts/PCG` | Data chunk, perakit chunk berbobot berbasis seed, validasi jangkauan (BFS) |
 | DDA | `Assets/Scripts/DDA` | Pencatat performa, skor kesulitan rolling window, pemetaan ke parameter |
@@ -46,7 +48,7 @@ berupa primitif (kapsul dan kubus) sebagai placeholder.
 | CameraRig | `Assets/Scripts/CameraRig` | Kamera follow samping |
 | Core | `Assets/Scripts/Core` | `GameDirector` (perakit sistem dan game loop), event global, input |
 | Editor | `Assets/Scripts/Editor` | Menu Untai: generator chunk, prefab, material, dan isi scene |
-| Prefab | `Assets/Prefabs/{Characters,Level,Thread}` | Player, Enemy / Platform, Checkpoint, Goal, Trap, KillZone / Anchor |
+| Prefab | `Assets/Prefabs/{Characters,Level,Thread}` | CharacterA, CharacterB, Enemy / Platform, Checkpoint, Goal, Trap, KillZone / Anchor, Tandem |
 | Material | `Assets/Materials` | Satu material per warna (pemain, state enemy, tingkat platform, dll.) |
 
 Detail struktur folder: [docs/STRUCTURE.md](docs/STRUCTURE.md).
@@ -56,7 +58,7 @@ Detail struktur folder: [docs/STRUCTURE.md](docs/STRUCTURE.md).
 Prototipe siap demo (Project EAS). Yang sudah berjalan:
 
 - [x] Gerak samping 2.5D, lompat variabel, coyote time, kamera follow
-- [x] Benang terikat checkpoint (sumber daya), render benang, ayunan jangkar sederhana
+- [x] Tandem: dua karakter terikat untai, ganti karakter, menggantung/berayun, panjat, tarik pasangan, kait jangkar
 - [x] Checkpoint, kill zone, jebakan, goal, respawn
 - [x] **PCG**: 12 chunk (mudah/sedang/sulit), perakit weighted ber-seed, tolak sambungan, validasi BFS
 - [x] **DDA**: rolling window performa, tiga kondisi, pemetaan parameter dengan clamp dan step limit
@@ -68,7 +70,7 @@ Prototipe siap demo (Project EAS). Yang sudah berjalan:
 
 1. Buka proyek dengan **Unity 6000.3.23f1**.
 2. Buka scene `Assets/Scenes/Untai_Main.unity` lalu tekan **Play**.
-   Hierarchy scene berisi `GameDirector`, `Player` (instance prefab), `Main Camera` (dengan
+   Hierarchy scene berisi `GameDirector`, `CharacterA`, `CharacterB`, `Tandem` (instance prefab), `Main Camera` (dengan
    `SideFollowCamera`), `KillZone`, `Directional Light`, dan `Global Volume`. Objek level hasil PCG
    dibuat saat Play di bawah `GeneratedLevel`.
 3. Scene lain (misal `SampleScene`) juga bisa: bootstrap otomatis membuat game saat Play.
@@ -92,9 +94,9 @@ Sebagian besar pengaturan sudah otomatis. Yang masih perlu dilakukan sendiri:
 
 **Opsional / bila diperlukan**
 
-- **Aset chunk:** Editor membuat `Assets/Data/Resources/Untai/Chunks/*.asset` otomatis saat proyek dimuat.
+- **Aset chunk:** Editor membuat `Assets/Data/Resources/Untai/TandemChunks/*.asset` otomatis saat proyek dimuat (folder `Chunks` lama tidak dipakai lagi dan boleh dihapus).
   File ini tidak wajib (game memakai definisi chunk dari kode bila tidak ada), tetapi boleh di-commit:
-  `git add Assets/Data/Resources/Untai/Chunks`.
+  `git add Assets/Data/Resources/Untai/TandemChunks`.
 - **Prefab atau material terhapus:** jalankan **Untai > Build Prefabs and Scene**. Hanya aset yang hilang
   yang dibuat ulang; prefab yang sudah diedit dan slot PrefabLibrary yang sudah terisi tidak ditimpa.
 - **Objek tampil sebagai primitif polos, bukan prefab:** pilih `GameDirector` di Hierarchy dan pastikan field
@@ -112,9 +114,9 @@ Sebagian besar pengaturan sudah otomatis. Yang masih perlu dilakukan sendiri:
 ## Prefab dan PrefabLibrary
 
 ```
-Assets/Prefabs/Characters/  Player.prefab   Enemy.prefab
+Assets/Prefabs/Characters/  CharacterA.prefab   CharacterB.prefab   Enemy.prefab
 Assets/Prefabs/Level/       Platform.prefab Checkpoint.prefab Goal.prefab Trap.prefab KillZone.prefab
-Assets/Prefabs/Thread/      Anchor.prefab
+Assets/Prefabs/Thread/      Anchor.prefab   Tandem.prefab (Tandem + TandemRope + LineRenderer)
 Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukuran dasar platform)
 ```
 
@@ -124,9 +126,9 @@ Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukur
   builder membuat primitif dari kode (fallback), jadi game tetap jalan.
 - **Mengubah warna:** edit material di `Assets/Materials` (misal `M_PlatformHard`, `M_EnemyChase`) atau ganti
   field material pada komponen prefab (`PlatformVisual`, `EnemyBrain`, `Anchor`, `Checkpoint`).
-- **Mengganti model dummy:** buka prefab (misal `Player.prefab`), tambahkan model sebagai child, lalu matikan
+- **Mengganti model dummy:** buka prefab (misal `CharacterA.prefab`), tambahkan model sebagai child, lalu matikan
   atau hapus `MeshRenderer` kapsul. **Jangan hapus** collider dan komponen skripnya (`PlayerMotor`,
-  `ThreadController`, `ThreadRenderer`, `PlayerHealth`, `ThreadSwing`, `Rigidbody`). Untuk enemy, arahkan
+  `PlayerHealth`, `Rigidbody`). Nama objek `CharacterA`/`CharacterB` di scene dipakai untuk mencari karakter. Untuk enemy, arahkan
   `EnemyBrain.bodyRenderer` ke renderer model baru agar warna state tetap terlihat.
 - **Prefab baru:** buat prefab sendiri lalu seret ke slot di `PrefabLibrary`; slot yang terisi tidak diubah
   oleh menu builder.
@@ -135,11 +137,24 @@ Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukur
 
 | Tombol | Fungsi |
 |---|---|
-| A/D atau panah | Gerak |
-| Space | Lompat (tahan = lebih tinggi); saat mengayun = lepas dengan dorongan |
-| Tahan Shift / J | Kaitkan benang ke jangkar (bola biru, menyala kuning bila terjangkau) |
-| W/S | Gulung/ulur tali saat mengayun |
-| R | Respawn di checkpoint |
+| A/D atau panah | Gerak; saat menggantung: memompa ayunan |
+| Space | Lompat (tahan = lebih tinggi); saat menggantung: lompat dari untai; saat mengait jangkar: lepas dengan dorongan |
+| Tab / Q | Ganti karakter aktif (karakter lain diam menjadi tumpuan) |
+| W/S | Panjat / turuni untai saat menggantung (dari pasangan atau jangkar) |
+| Tahan F | Gulung untai: tarik pasangan mendekat / naik |
+| Tahan Shift / J | Kaitkan untai ke jangkar (bola biru, menyala kuning bila terjangkau) |
+| R | Respawn keduanya di checkpoint |
+
+### Cara menyelesaikan rintangan
+
+- **Jurang lebar tanpa jangkar:** biarkan satu karakter berdiri di tepi (tumpuan), jalankan karakter lain
+  turun dari tepi lalu pompa ayunan (A/D) dan lompat dari untai (Space) ke seberang. Ganti karakter (Tab),
+  turunkan karakter kedua ke jurang; ia menggantung pada pasangannya, lalu panjat (W) dan lompat naik,
+  atau tahan F dari karakter di seberang untuk menariknya.
+- **Tebing lebih tinggi dari lompatan:** dekati jangkar, tahan Shift untuk mengait, panjat (W), ayun, lalu
+  Space untuk melompat ke atas tebing. Setelah itu tarik pasangan dengan F atau ganti karakter dan ulangi.
+- **Untai terlalu tegang:** karakter aktif tertahan bila terlalu jauh dari pasangannya; ganti karakter
+  atau tarik pasangan untuk maju bersama.
 
 ## Tombol Demo
 
