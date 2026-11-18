@@ -117,8 +117,10 @@ namespace Untai.Level
             if (idx > PlayerChunkIndex)
             {
                 PlayerChunkIndex = idx;
-                EnsureAhead(idx);
+                // Urutan penting: event dulu (tracker -> DDA memperbarui parameter),
+                // baru chunk di depan dirakit sehingga memakai parameter terbaru.
                 GameEvents.RaiseChunkEntered(idx);
+                EnsureAhead(idx);
             }
         }
 
