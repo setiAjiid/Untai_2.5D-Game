@@ -198,6 +198,27 @@ namespace Untai.AI
             transform.position = new Vector3(x, _y + (State == EnemyState.Attack && !_lunging ? 0.1f * Mathf.Sin(Time.time * 60f) : 0f), 0f);
         }
 
+        public static Color StateColor(EnemyState s) =>
+            s == EnemyState.Patrol ? PatrolColor : s == EnemyState.Chase ? ChaseColor
+            : s == EnemyState.Attack ? AttackColor : ReturnColor;
+
+        // Gizmos: jarak deteksi (warna state), jarak serang, dan batas patroli platform.
+        void OnDrawGizmos()
+        {
+            Vector3 p = transform.position;
+            Gizmos.color = StateColor(State);
+            Gizmos.DrawWireSphere(p, detectRange);
+            Gizmos.color = AttackColor;
+            Gizmos.DrawWireSphere(p, attackRange);
+            Gizmos.color = Color.white;
+            Gizmos.DrawLine(new Vector3(minX, p.y - 0.9f, 0f), new Vector3(maxX, p.y - 0.9f, 0f));
+            Gizmos.DrawLine(new Vector3(minX, p.y - 1.2f, 0f), new Vector3(minX, p.y - 0.6f, 0f));
+            Gizmos.DrawLine(new Vector3(maxX, p.y - 1.2f, 0f), new Vector3(maxX, p.y - 0.6f, 0f));
+#if UNITY_EDITOR
+            UnityEditor.Handles.Label(p + Vector3.up * 1.8f, "E" + Id + " " + StateLabel(State));
+#endif
+        }
+
         /// <summary>Serangan: ancang-ancang (windup, bergetar merah) lalu menerjang searah pemain.</summary>
         float UpdateAttack(float x)
         {

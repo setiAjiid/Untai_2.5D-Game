@@ -1,5 +1,6 @@
 using System.Text;
 using UnityEngine;
+using Untai.AI;
 using Untai.Data;
 using Untai.DDA;
 using Untai.Level;
@@ -57,6 +58,7 @@ namespace Untai.DebugTools
             AppendDDA(sb);
             AppendParameters(sb);
             AppendGameplay(sb);
+            AppendEnemies(sb);
             _content.text = sb.ToString();
         }
 
@@ -132,6 +134,50 @@ namespace Untai.DebugTools
             Param(sb, " M", p.mediumWeight, o.mediumWeight, "0.00");
             Param(sb, " H", p.hardWeight, o.hardWeight, "0.00");
             sb.Append('\n');
+        }
+
+        void AppendEnemies(StringBuilder sb)
+        {
+            sb.Append("\n<b><color=#ff9a9a>[5] GAME AI (Enemy FSM)</color></b>\n");
+            var all = EnemyBrain.All;
+            int patrol = 0, chase = 0, attack = 0, ret = 0;
+            for (int i = 0; i < all.Count; i++)
+            {
+                switch (all[i].State)
+                {
+                    case EnemyState.Patrol: patrol++; break;
+                    case EnemyState.Chase: chase++; break;
+                    case EnemyState.Attack: attack++; break;
+                    default: ret++; break;
+                }
+            }
+            sb.Append("  aktif ").Append(all.Count)
+              .Append("  | Patrol ").Append(patrol).Append("  Chase ").Append(chase)
+              .Append("  Attack ").Append(attack).Append("  Return ").Append(ret).Append('\n');
+            if (all.Count > 0)
+            {
+                var e0 = all[0];
+                sb.Append("  agresivitas ").Append(e0.Aggression.ToString("0.00"))
+                  .Append(" -> deteksi ").Append(e0.detectRange.ToString("0.0"))
+                  .Append("  kejar ").Append(e0.chaseSpeed.ToString("0.0"))
+                  .Append("  ancang ").Append(e0.attackWindup.ToString("0.00"))
+                  .Append("s  jeda ").Append(e0.attackCooldown.ToString("0.0")).Append("s\n");
+            }
+            // Tampilkan enemy terdekat dari pemain (maksimal 4) beserta state-nya.
+            Vector3 pp = thread != null ? thread.transform.position : Vector3.zero;
+            int shown = 0;
+            for (int i = 0; i < all.Count && shown < 4; i++)
+            {
+                var e = all[i];
+                float d = Mathf.Abs(e.transform.position.x - pp.x);
+                if (d > 25f) continue;
+                shown++;
+                sb.Append("  E").Append(e.Id).Append(' ')
+                  .Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(EnemyBrain.StateColor(e.State))).Append('>')
+                  .Append(EnemyBrain.StateLabel(e.State)).Append("</color>")
+                  .Append("  jarak ").Append(d.ToString("0.0"))
+                  .Append("  waktu state ").Append(e.StateTime.ToString("0.0")).Append("s\n");
+            }
         }
 
         void AppendGameplay(StringBuilder sb)
