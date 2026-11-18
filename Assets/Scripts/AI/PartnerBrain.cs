@@ -167,8 +167,21 @@ namespace Untai.AI
                 Scores[i] = i == target ? Mathf.Min(1f, Scores[i] + commandBonus) : Scores[i] * commandDamp;
         }
 
+        /// <summary>Aksi yang dipaksa tombol demo F10 (null = Utility AI bebas memilih).</summary>
+        public PartnerAction? Forced { get; private set; }
+
+        /// <summary>F10: bebas -> Follow -> Wait -> Assist -> bebas.</summary>
+        public void CycleForced()
+        {
+            if (!Forced.HasValue) Forced = PartnerAction.Follow;
+            else if (Forced.Value == PartnerAction.Assist) Forced = null;
+            else Forced = Forced.Value + 1;
+            _lastSwitch = Time.time;
+        }
+
         void Choose(bool onRope)
         {
+            if (Forced.HasValue) { Current = Forced.Value; return; }
             int best = 0;
             for (int i = 1; i < Scores.Length; i++) if (Scores[i] > Scores[best]) best = i;
             var next = (PartnerAction)best;
@@ -315,6 +328,7 @@ namespace Untai.AI
         /// <summary>Partner terjebak: kedua karakter respawn bersama di dekat karakter aktif (bila berdiri).</summary>
         protected virtual void OnStuck()
         {
+            Core.GameEvents.RaisePartnerStuck();
             if (Leader.IsGrounded) tandem.RespawnAll(Leader.transform.position + Vector3.up * 0.2f);
             else Leader.GetComponent<PlayerHealth>().Respawn();
         }

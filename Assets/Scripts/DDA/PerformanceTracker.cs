@@ -17,10 +17,12 @@ namespace Untai.DDA
         /// <summary>Rasio sisa benang saat mencapai checkpoint di chunk ini (-1 jika tidak ada).</summary>
         public float threadRatioAtCheckpoint = -1f;
         public bool simulated;
+        public int switches;
+        public int partnerStuck;
 
         public void Clear(int index)
         {
-            chunkIndex = index; deaths = 0; falls = 0; damage = 0; time = 0f;
+            chunkIndex = index; deaths = 0; falls = 0; damage = 0; time = 0f; switches = 0; partnerStuck = 0;
             threadRatioAtCheckpoint = -1f; simulated = false;
         }
 
@@ -28,6 +30,7 @@ namespace Untai.DDA
         {
             chunkIndex = o.chunkIndex; deaths = o.deaths; falls = o.falls; damage = o.damage;
             time = o.time; threadRatioAtCheckpoint = o.threadRatioAtCheckpoint; simulated = o.simulated;
+            switches = o.switches; partnerStuck = o.partnerStuck;
         }
     }
 
@@ -49,6 +52,10 @@ namespace Untai.DDA
         public int TotalDeaths { get; private set; }
         public int TotalFalls { get; private set; }
         public int TotalDamage { get; private set; }
+        /// <summary>Jumlah pergantian karakter (Tab/Q).</summary>
+        public int TotalSwitches { get; private set; }
+        /// <summary>Jumlah kali partner AI terjebak.</summary>
+        public int TotalPartnerStuck { get; private set; }
         public float LastCheckpointThreadRatio { get; private set; } = 1f;
 
         /// <summary>Chunk selesai (pemain masuk chunk berikutnya).</summary>
@@ -70,7 +77,12 @@ namespace Untai.DDA
             GameEvents.PlayerDamaged += OnDamaged;
             GameEvents.CheckpointReached += OnCheckpoint;
             GameEvents.ChunkEntered += OnChunkEntered;
+            GameEvents.CharacterSwitched += OnSwitched;
+            GameEvents.PartnerStuck += OnPartnerStuck;
         }
+
+        void OnSwitched() { Current.switches++; TotalSwitches++; }
+        void OnPartnerStuck() { Current.partnerStuck++; TotalPartnerStuck++; }
 
         void OnDisable()
         {
@@ -78,6 +90,8 @@ namespace Untai.DDA
             GameEvents.PlayerDamaged -= OnDamaged;
             GameEvents.CheckpointReached -= OnCheckpoint;
             GameEvents.ChunkEntered -= OnChunkEntered;
+            GameEvents.CharacterSwitched -= OnSwitched;
+            GameEvents.PartnerStuck -= OnPartnerStuck;
             if (Instance == this) Instance = null;
         }
 

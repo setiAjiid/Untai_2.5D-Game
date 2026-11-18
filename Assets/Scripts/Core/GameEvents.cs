@@ -18,12 +18,18 @@ namespace Untai.Core
         /// <summary>Indeks chunk yang baru dimasuki pemain.</summary>
         public static event Action<int> ChunkEntered;
         public static event Action GoalReached;
+        /// <summary>Pemain menekan Tab/Q untuk berganti karakter.</summary>
+        public static event Action CharacterSwitched;
+        /// <summary>Partner AI terjebak dan harus dipulihkan.</summary>
+        public static event Action PartnerStuck;
 
         public static void RaisePlayerDied(DeathCause cause) => PlayerDied?.Invoke(cause);
         public static void RaisePlayerDamaged(int amount) => PlayerDamaged?.Invoke(amount);
         public static void RaiseCheckpointReached(Vector3 pos, float ratio) => CheckpointReached?.Invoke(pos, ratio);
         public static void RaiseChunkEntered(int index) => ChunkEntered?.Invoke(index);
         public static void RaiseGoalReached() => GoalReached?.Invoke();
+        public static void RaiseCharacterSwitched() => CharacterSwitched?.Invoke();
+        public static void RaisePartnerStuck() => PartnerStuck?.Invoke();
 
         // Bersihkan pendengar saat Play dimulai (aman bila Domain Reload dimatikan).
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -31,6 +37,7 @@ namespace Untai.Core
         {
             PlayerDied = null; PlayerDamaged = null; CheckpointReached = null;
             ChunkEntered = null; GoalReached = null;
+            CharacterSwitched = null; PartnerStuck = null;
         }
     }
 }

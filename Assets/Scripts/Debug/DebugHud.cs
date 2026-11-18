@@ -59,6 +59,7 @@ namespace Untai.DebugTools
             AppendParameters(sb);
             AppendGameplay(sb);
             AppendEnemies(sb);
+            AppendPartner(sb);
             _content.text = sb.ToString();
         }
 
@@ -137,6 +138,9 @@ namespace Untai.DebugTools
             Param(sb, "  enemy/chunk", p.enemyCount, o.enemyCount, "0");
             sb.Append('\n');
             Param(sb, "  agresivitas", p.aggression, o.aggression, "0.00");
+            Param(sb, "partner", p.partnerAssistLevel, o.partnerAssistLevel, "0.00");
+            Param(sb, "ikut", p.partnerFollowDistance, o.partnerFollowDistance, "0.0");
+            sb.Append('\n');
             Param(sb, "  checkpoint/", p.checkpointInterval, o.checkpointInterval, "0");
             Param(sb, "  untai", p.threadLength, o.threadLength, "0.0");
             Param(sb, "jangkar", p.anchorRange, o.anchorRange, "0.0");
@@ -145,6 +149,43 @@ namespace Untai.DebugTools
             Param(sb, " M", p.mediumWeight, o.mediumWeight, "0.00");
             Param(sb, " H", p.hardWeight, o.hardWeight, "0.00");
             sb.Append('\n');
+        }
+
+        static readonly string[] ActionNames = { "Follow", "Wait", "Assist" };
+
+        void AppendPartner(StringBuilder sb)
+        {
+            sb.Append("\n<b><color=#9affd5>[6] PARTNER AI (Utility AI)</color></b>\n");
+            var brain = PartnerBrain.Instance;
+            var tandem = Tandem.Instance;
+            if (brain == null || tandem == null || tandem.Partner == null) { sb.Append("  (partner AI belum aktif)\n"); return; }
+            sb.Append("  ").Append(tandem.Partner.name).Append(" -> <b>")
+              .Append(ActionNames[(int)brain.Current]).Append("</b>");
+            if (brain.Forced.HasValue) sb.Append("  <color=#ffb347>[DIPAKSA F10]</color>");
+            sb.Append("  perintah E: ")
+              .Append(brain.Command == PartnerCommand.WaitHere ? "Tunggu di sini"
+                    : brain.Command == PartnerCommand.FollowMe ? "Ikuti saya" : "-")
+              .Append('\n');
+            // Skor kegunaan tiap aksi (0..1) dengan bar sederhana.
+            for (int i = 0; i < brain.Scores.Length; i++)
+            {
+                float v = brain.Scores[i];
+                sb.Append("  ").Append(ActionNames[i]).Append(i == 1 ? "  " : "").Append(' ')
+                  .Append(v.ToString("0.00")).Append(' ');
+                int bars = Mathf.RoundToInt(v * 20f);
+                sb.Append(i == (int)brain.Current ? "<color=#9affd5>" : "<color=#777777>");
+                for (int k = 0; k < bars; k++) sb.Append('|');
+                sb.Append("</color>\n");
+            }
+            sb.Append("  assist ").Append(brain.AssistLevel.ToString("0.00"))
+              .Append("  jarak nyaman ").Append(brain.comfortDistance.ToString("0.0"))
+              .Append("  jurang depan ").Append(brain.GapAhead ? "ya" : "tidak")
+              .Append("  tebing depan ").Append(brain.CliffAhead ? "ya" : "tidak")
+              .Append(brain.IsBlocked ? "  <color=#ff8080>TERTAHAN</color>" : "").Append('\n');
+            var t = PerformanceTracker.Instance;
+            if (t != null)
+                sb.Append("  ganti karakter (Tab) ").Append(t.TotalSwitches)
+                  .Append("  partner terjebak ").Append(t.TotalPartnerStuck).Append('\n');
         }
 
         void AppendEnemies(StringBuilder sb)

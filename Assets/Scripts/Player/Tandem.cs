@@ -57,6 +57,7 @@ namespace Untai.Player
         {
             SetActive(Partner, true);
             SwitchCount++;
+            GameEvents.RaiseCharacterSwitched();
         }
 
         void SetActive(PlayerMotor next, bool notify)

@@ -16,7 +16,7 @@ namespace Untai.DebugTools
     {
         public const string Legend =
             "F1 HUD  F2 sim. mati  F3 sim. bagus  F4 sim. buruk  F5 seed baru  F6 ulang seed  " +
-            "F7 level berikut  F8 reset DDA  F9 chunk berikut  R respawn";
+            "F7 level berikut  F8 reset DDA  F9 chunk berikut  F10 paksa aksi partner  R respawn";
 
         GameDirector _director;
         GUIStyle _style;
@@ -52,6 +52,13 @@ namespace Untai.DebugTools
             }
 
             if (InputReader.KeyDown(Key.F9)) SkipToNextChunk();
+
+            if (InputReader.KeyDown(Key.F10) && _director.Partner != null)
+            {
+                _director.Partner.CycleForced();
+                var f = _director.Partner.Forced;
+                _director.Flash(f.HasValue ? "Partner dipaksa: " + f.Value : "Partner: Utility AI bebas memilih");
+            }
 
             if (InputReader.KeyDown(Key.R)) _director.Health.Respawn();
         }
@@ -113,7 +120,7 @@ namespace Untai.DebugTools
             GUI.Box(r, GUIContent.none);
             GUI.Label(new Rect(16f, r.y + 4f, r.width - 16f, 18f), Legend, _style);
             GUI.Label(new Rect(16f, r.y + 21f, r.width - 16f, 18f),
-                "Main: A/D gerak, Space lompat, Tab/Q ganti karakter, tahan Shift/J = kait jangkar, W/S panjat untai, tahan F = tarik pasangan", _style);
+                "Main: A/D gerak, Space lompat, Tab/Q ganti karakter, E perintah partner (tunggu/ikuti), Shift/J kait jangkar, W/S panjat, F tarik partner", _style);
         }
     }
 }
