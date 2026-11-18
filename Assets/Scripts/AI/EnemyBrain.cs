@@ -37,6 +37,18 @@ namespace Untai.AI
         public float StateTime => Time.time - _stateEnter;
         public PlayerHealth Target { get; set; }
 
+        [Header("Tampilan (diisi prefab)")]
+        [Tooltip("Renderer tubuh yang berganti material sesuai state.")]
+        public Renderer bodyRenderer;
+        [Tooltip("Label state di atas kepala (opsional).")]
+        public TextMesh stateLabel;
+        public Material patrolMaterial;
+        public Material chaseMaterial;
+        public Material attackMaterial;
+        public Material returnMaterial;
+        [Tooltip("Selisih tinggi pivot terhadap titik spawn (titik spawn = permukaan platform + 1).")]
+        public float heightOffset = -0.2f;
+
         static readonly Color PatrolColor = new Color(0.35f, 0.8f, 0.4f);
         static readonly Color ChaseColor = new Color(1f, 0.6f, 0.15f);
         static readonly Color AttackColor = new Color(1f, 0.15f, 0.15f);
@@ -51,10 +63,28 @@ namespace Untai.AI
         bool _lunging;
         bool _hitThisAttack;
         float _lungeStartX;
-        Renderer _renderer;
-        TextMesh _label;
 
+        /// <summary>Buat enemy dari prefab PrefabLibrary, atau primitif bila prefab kosong.</summary>
         public static EnemyBrain Create(Vector3 position, float minX, float maxX, PlayerHealth target, Transform parent)
+        {
+            EnemyBrain e = null;
+            var prefab = Data.PrefabLibrary.Get(l => l.enemy);
+            if (prefab != null) e = Prims.Spawn(prefab, position, parent).GetComponent<EnemyBrain>();
+            if (e == null) e = CreatePrimitive(position, parent);
+
+            e.minX = minX;
+            e.maxX = Mathf.Max(minX, maxX);
+            e.Target = target;
+            e._homeX = Mathf.Clamp(position.x, e.minX, e.maxX);
+            e._y = position.y + e.heightOffset;
+            e.Id = ++s_NextId;
+            e.ApplyAggression(Data.GameplayParameters.Active.aggression);
+            e.EnterState(EnemyState.Patrol);
+            return e;
+        }
+
+        /// <summary>Versi primitif dari kode (fallback, juga dipakai generator prefab).</summary>
+        public static EnemyBrain CreatePrimitive(Vector3 position, Transform parent)
         {
             var go = Prims.Create(PrimitiveType.Capsule, "Enemy", position, new Vector3(0.9f, 0.8f, 0.9f),
                 PatrolColor, parent);
@@ -62,16 +92,8 @@ namespace Untai.AI
             Prims.Create(PrimitiveType.Cube, "Visor", position + new Vector3(0f, 0.25f, -0.4f),
                 new Vector3(0.6f, 0.15f, 0.1f), Color.black, go.transform, false);
             var e = go.AddComponent<EnemyBrain>();
-            e.minX = minX;
-            e.maxX = Mathf.Max(minX, maxX);
-            e.Target = target;
-            e._homeX = Mathf.Clamp(position.x, e.minX, e.maxX);
-            e._y = position.y - 0.2f;
-            e._renderer = go.GetComponent<Renderer>();
-            e._label = Prims.Label("", position + Vector3.up * 1.4f, go.transform, Color.white, 0.06f);
-            e.Id = ++s_NextId;
-            e.ApplyAggression(Data.GameplayParameters.Active.aggression);
-            e.EnterState(EnemyState.Patrol);
+            e.bodyRenderer = go.GetComponent<Renderer>();
+            e.stateLabel = Prims.Label("", position + Vector3.up * 1.4f, go.transform, Color.white, 0.06f);
             return e;
         }
 
@@ -123,13 +145,13 @@ namespace Untai.AI
             _stateEnter = Time.time;
             _lunging = false;
             _hitThisAttack = false;
-            if (_renderer != null)
+            if (bodyRenderer != null)
             {
-                Color c = s == EnemyState.Patrol ? PatrolColor : s == EnemyState.Chase ? ChaseColor
-                    : s == EnemyState.Attack ? AttackColor : ReturnColor;
-                _renderer.sharedMaterial = Prims.Mat(c);
+                Material m = s == EnemyState.Patrol ? patrolMaterial : s == EnemyState.Chase ? chaseMaterial
+                    : s == EnemyState.Attack ? attackMaterial : returnMaterial;
+                bodyRenderer.sharedMaterial = Prims.MatOr(m, StateColor(s));
             }
-            if (_label != null) _label.text = "E" + Id + " " + StateLabel(s);
+            if (stateLabel != null) stateLabel.text = "E" + Id + " " + StateLabel(s);
         }
 
         public static string StateLabel(EnemyState s)

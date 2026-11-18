@@ -1,4 +1,5 @@
 using UnityEngine;
+using Untai.Data;
 using Untai.AI;
 using Untai.DDA;
 using Untai.Level;
@@ -17,9 +18,18 @@ namespace Untai.Core
     ///        -> Game AI     (EnemyBrain memakai agresivitas terbaru lewat event Changed)
     ///        -> Perubahan Gameplay yang dialami pemain, lalu kembali tercatat sebagai performa.
     /// </summary>
+    [DefaultExecutionOrder(-100)] // set sumber parameter & prefab sebelum skrip lain membacanya
     public class GameDirector : MonoBehaviour
     {
         public int startSeed = 12345;
+
+        [Header("Aset (isi di Inspector; kosong = dimuat dari Resources/Untai)")]
+        public GameplayParameters parameters;
+        public PrefabLibrary prefabs;
+
+        [Header("Referensi scene (opsional; kosong = dibuat otomatis)")]
+        public PlayerMotor player;
+        public KillZone killZone;
 
         public static GameDirector Instance { get; private set; }
 
@@ -34,34 +44,42 @@ namespace Untai.Core
         void Awake()
         {
             Instance = this;
+            GameplayParameters.UseSource(parameters);
+            PrefabLibrary.SetActive(prefabs);
+        }
+
+        T GetOrAdd<T>() where T : Component
+        {
+            var c = GetComponent<T>();
+            return c != null ? c : gameObject.AddComponent<T>();
         }
 
         void Start()
         {
             GameBootstrap.EnsureLight();
 
-            // Pemain dan benang.
-            Player = PlayerMotor.CreatePlayer(new Vector3(2.5f, 1.2f, 0f));
-            Thread = Player.gameObject.AddComponent<ThreadController>();
-            Player.gameObject.AddComponent<ThreadRenderer>();
-            Health = Player.gameObject.AddComponent<PlayerHealth>();
-            Player.gameObject.AddComponent<ThreadSwing>();
+            // Pemain dan benang: pakai instance di scene bila ada, jika tidak dari prefab/primitif.
+            Player = player != null ? player : FindAnyObjectByType<PlayerMotor>();
+            if (Player == null) Player = PlayerMotor.Spawn(new Vector3(2.5f, 1.2f, 0f));
+            PlayerMotor.EnsureComponents(Player.gameObject);
+            Thread = Player.GetComponent<ThreadController>();
+            Health = Player.GetComponent<PlayerHealth>();
 
             // Urutan alur: performa -> DDA -> parameter -> PCG dan AI.
-            Tracker = gameObject.AddComponent<PerformanceTracker>();
-            Dda = gameObject.AddComponent<DDAController>();
-            Level = gameObject.AddComponent<LevelBuilder>();
+            Tracker = GetOrAdd<PerformanceTracker>();
+            Dda = GetOrAdd<DDAController>();
+            Level = GetOrAdd<LevelBuilder>();
             Level.player = Player;
             Level.thread = Thread;
-            Spawner = gameObject.AddComponent<EnemySpawner>();
+            Spawner = GetOrAdd<EnemySpawner>();
             Spawner.Bind(Level, Health);
 
-            var kill = gameObject.AddComponent<KillZone>();
+            var kill = killZone != null ? killZone : KillZone.FindOrCreate();
             kill.player = Health;
             kill.killHeight = Level.killHeight;
 
-            gameObject.AddComponent<DebugTools.DebugHud>().thread = Thread;
-            gameObject.AddComponent<DebugTools.DemoHotkeys>();
+            GetOrAdd<DebugTools.DebugHud>().thread = Thread;
+            GetOrAdd<DebugTools.DemoHotkeys>();
             CameraRig.SideFollowCamera.Attach(Player.transform);
 
             // Parameter awal DDA diterapkan sebelum chunk pertama dirakit.

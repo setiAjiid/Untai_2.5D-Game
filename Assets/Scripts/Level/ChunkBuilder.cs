@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Untai.Core;
+using Untai.Data;
 using Untai.PCG;
 using Untai.Thread;
 
@@ -15,20 +16,15 @@ namespace Untai.Level
     }
 
     /// <summary>
-    /// Membangun ChunkDefinition menjadi primitif di dunia (tanpa prefab buatan tangan).
-    /// Jebakan dan enemy dipilih secara acak ber-seed sesuai parameter saat chunk dibangun.
+    /// Membangun ChunkDefinition menjadi objek di dunia: platform, jangkar, jebakan, dan titik enemy
+    /// diinstansiasi dari prefab PrefabLibrary (fallback primitif bila kosong). Skala dan posisi
+    /// tetap ditentukan data chunk. Jebakan dan enemy dipilih acak ber-seed sesuai parameter.
     /// </summary>
     public static class ChunkBuilder
     {
-        public const float PillarBottom = -5f;
-        public const float Depth = 3f;
-
-        static readonly Color[] TierColors =
-        {
-            new Color(0.42f, 0.55f, 0.45f), // mudah
-            new Color(0.42f, 0.48f, 0.62f), // sedang
-            new Color(0.58f, 0.42f, 0.6f),  // sulit
-        };
+        // Ukuran dasar dibaca dari PrefabLibrary (bisa diubah di Inspector).
+        public static float PillarBottom => PrefabLibrary.PillarBottom;
+        public static float Depth => PrefabLibrary.PlatformDepth;
 
         static readonly List<int> s_Indices = new List<int>(8);
 
@@ -38,16 +34,23 @@ namespace Untai.Level
             Random.InitState(seed);
             var root = new GameObject("Chunk " + def.id).transform;
             root.SetParent(parent, false);
-            Color color = TierColors[(int)def.tier];
+            var platformPrefab = PrefabLibrary.Get(l => l.platform);
+            float bottom = PillarBottom, depth = Depth;
 
             // Platform berupa pilar dari dasar sampai permukaan atas.
             for (int i = 0; i < def.platforms.Count; i++)
             {
                 var p = def.platforms[i];
-                float h = p.top - PillarBottom;
-                Prims.Box("Platform " + i,
-                    new Vector3(offsetX + p.x + p.width * 0.5f, p.top - h * 0.5f, 0f),
-                    new Vector3(p.width, h, Depth), color, root);
+                float h = p.top - bottom;
+                var center = new Vector3(offsetX + p.x + p.width * 0.5f, p.top - h * 0.5f, 0f);
+                var size = new Vector3(p.width, h, depth);
+                GameObject go = platformPrefab != null
+                    ? Prims.Spawn(platformPrefab, center, root)
+                    : Prims.Box("Platform", center, size, PlatformVisual.DefaultTierColors[(int)def.tier], root);
+                go.name = "Platform " + i;
+                go.transform.localScale = size;
+                var visual = go.GetComponent<PlatformVisual>();
+                if (visual != null) visual.SetTier((int)def.tier);
             }
 
             for (int i = 0; i < def.anchors.Count; i++)

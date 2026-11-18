@@ -50,6 +50,8 @@ namespace Untai.Level
         public string Sequence { get; private set; } = "";
         public string LastNote { get; private set; } = "";
         public ChunkAssembler Assembler => _assembler;
+        /// <summary>Parent semua objek level hasil PCG ("GeneratedLevel").</summary>
+        public Transform Root => _root;
 
         /// <summary>Diminta saat chunk dibangun; modul AI yang membuat enemy-nya.</summary>
         public event Action<EnemySpawnInfo> EnemySpawnRequested;
@@ -85,7 +87,8 @@ namespace Untai.Level
             LevelNumber = levelNumber;
             if (_root != null) Destroy(_root.gameObject);
             LevelCleared?.Invoke();
-            _root = new GameObject("Level (seed " + seed + ")").transform;
+            // Semua objek hasil PCG berada di bawah satu parent agar Hierarchy rapi.
+            _root = new GameObject("GeneratedLevel").transform;
             Chunks.Clear();
             _seq.Length = 0;
             _cursorX = 0f;

@@ -21,7 +21,11 @@ namespace Untai.DebugTools
         GameDirector _director;
         GUIStyle _style;
 
-        void Start() => _director = GetComponent<GameDirector>();
+        void Start()
+        {
+            _director = GetComponent<GameDirector>();
+            if (_director == null) _director = GameDirector.Instance;
+        }
 
         void Update()
         {

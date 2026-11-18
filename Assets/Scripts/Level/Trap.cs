@@ -1,5 +1,6 @@
 using UnityEngine;
 using Untai.Core;
+using Untai.Data;
 using Untai.Player;
 
 namespace Untai.Level
@@ -9,12 +10,27 @@ namespace Untai.Level
     {
         public int damage = 1;
 
+        public static readonly Color DefaultColor = new Color(0.9f, 0.2f, 0.2f);
+
+        /// <summary>Buat jebakan dari prefab PrefabLibrary, atau primitif bila prefab kosong.</summary>
         public static Trap Create(Vector3 groundPos, Transform parent)
+        {
+            var prefab = PrefabLibrary.Get(l => l.trap);
+            if (prefab != null)
+            {
+                var t = Prims.Spawn(prefab, groundPos, parent).GetComponent<Trap>();
+                if (t != null) return t;
+            }
+            return CreatePrimitive(groundPos, parent);
+        }
+
+        /// <summary>Versi primitif dari kode (fallback, juga dipakai generator prefab).</summary>
+        public static Trap CreatePrimitive(Vector3 groundPos, Transform parent)
         {
             var root = new GameObject("Trap");
             root.transform.SetParent(parent, false);
             root.transform.position = groundPos;
-            var red = new Color(0.9f, 0.2f, 0.2f);
+            var red = DefaultColor;
             for (int i = -1; i <= 1; i++)
             {
                 var spike = Prims.Box("Spike", groundPos + new Vector3(i * 0.35f, 0.25f, 0f),

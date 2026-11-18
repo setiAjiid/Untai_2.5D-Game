@@ -40,6 +40,11 @@ namespace Untai.Thread
         {
             _motor = GetComponent<PlayerMotor>();
             _thread = GetComponent<ThreadController>();
+        }
+
+        void Start()
+        {
+            // Di Start agar urutan komponen pada prefab tidak berpengaruh.
             var hp = GetComponent<PlayerHealth>();
             if (hp != null) hp.BeforeRespawn += () => Release(false);
         }

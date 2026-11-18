@@ -34,7 +34,11 @@ namespace Untai.AI
 
         void Spawn(EnemySpawnInfo info)
         {
-            if (_root == null) _root = new GameObject("Enemies").transform;
+            if (_root == null)
+            {
+                _root = new GameObject("Enemies").transform;
+                if (level != null && level.Root != null) _root.SetParent(level.Root, false);
+            }
             OnEnemyCreated(EnemyBrain.Create(info.position, info.minX, info.maxX, player, _root));
         }
 

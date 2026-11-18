@@ -50,6 +50,43 @@ namespace Untai.Player
             Body.interpolation = RigidbodyInterpolation.Interpolate;
             Body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             Body.useGravity = true;
+            // Tanpa gesekan agar tidak menempel di dinding platform (bila prefab belum punya material).
+            if (_capsule.sharedMaterial == null) _capsule.sharedMaterial = CreateNoFrictionMaterial();
+        }
+
+        public static PhysicsMaterial CreateNoFrictionMaterial()
+        {
+            return new PhysicsMaterial("PlayerNoFriction")
+            {
+                dynamicFriction = 0f, staticFriction = 0f,
+                frictionCombine = PhysicsMaterialCombine.Minimum,
+                bounciness = 0f, bounceCombine = PhysicsMaterialCombine.Minimum
+            };
+        }
+
+        public static readonly Color DefaultColor = new Color(0.95f, 0.55f, 0.25f);
+
+        /// <summary>
+        /// Buat pemain dari prefab PrefabLibrary (fallback primitif), lalu pastikan semua komponen
+        /// pemain dan benang ada.
+        /// </summary>
+        public static PlayerMotor Spawn(Vector3 position)
+        {
+            PlayerMotor m = null;
+            var prefab = PrefabLibrary.Get(l => l.player);
+            if (prefab != null) m = Prims.Spawn(prefab, position, null).GetComponent<PlayerMotor>();
+            if (m == null) m = CreatePlayer(position);
+            EnsureComponents(m.gameObject);
+            return m;
+        }
+
+        /// <summary>Tambahkan komponen yang belum ada (urutan: benang, render benang, nyawa, ayunan).</summary>
+        public static void EnsureComponents(GameObject go)
+        {
+            if (go.GetComponent<Thread.ThreadController>() == null) go.AddComponent<Thread.ThreadController>();
+            if (go.GetComponent<Thread.ThreadRenderer>() == null) go.AddComponent<Thread.ThreadRenderer>();
+            if (go.GetComponent<PlayerHealth>() == null) go.AddComponent<PlayerHealth>();
+            if (go.GetComponent<Thread.ThreadSwing>() == null) go.AddComponent<Thread.ThreadSwing>();
         }
 
         void Update()
@@ -118,18 +155,10 @@ namespace Untai.Player
             Body.linearVelocity = Vector3.zero;
         }
 
-        /// <summary>Membuat objek pemain kapsul lengkap dengan komponennya.</summary>
+        /// <summary>Versi primitif dari kode: kapsul + Rigidbody + PlayerMotor (fallback, juga dipakai generator prefab).</summary>
         public static PlayerMotor CreatePlayer(Vector3 position)
         {
-            var go = Prims.Create(PrimitiveType.Capsule, "Player", position, Vector3.one,
-                new Color(0.95f, 0.55f, 0.25f), null);
-            var col = go.GetComponent<CapsuleCollider>();
-            col.sharedMaterial = new PhysicsMaterial("PlayerNoFriction")
-            {
-                dynamicFriction = 0f, staticFriction = 0f,
-                frictionCombine = PhysicsMaterialCombine.Minimum,
-                bounciness = 0f, bounceCombine = PhysicsMaterialCombine.Minimum
-            };
+            var go = Prims.Create(PrimitiveType.Capsule, "Player", position, Vector3.one, DefaultColor, null);
             // "Mata" kecil supaya arah hadap terlihat.
             Prims.Create(PrimitiveType.Sphere, "Eye", position + new Vector3(0.3f, 0.45f, -0.35f),
                 Vector3.one * 0.22f, Color.white, go.transform, false);

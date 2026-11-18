@@ -13,6 +13,8 @@ namespace Untai.Thread
         const int SegmentCount = 16;
 
         public float width = 0.08f;
+        [Tooltip("Material garis benang (kosong = Sprites/Default). Warna diatur lewat slack/taut color.")]
+        public Material lineMaterial;
         public Color slackColor = new Color(0.9f, 0.85f, 1f);
         public Color tautColor = new Color(1f, 0.15f, 0.15f);
 
@@ -29,8 +31,12 @@ namespace Untai.Thread
             _line.widthMultiplier = width;
             _line.numCapVertices = 2;
             _line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            var shader = Shader.Find("Sprites/Default");
-            if (shader != null) _line.sharedMaterial = new Material(shader);
+            if (lineMaterial != null) _line.sharedMaterial = lineMaterial;
+            else
+            {
+                var shader = Shader.Find("Sprites/Default");
+                if (shader != null) _line.sharedMaterial = new Material(shader);
+            }
         }
 
         void OnDestroy()

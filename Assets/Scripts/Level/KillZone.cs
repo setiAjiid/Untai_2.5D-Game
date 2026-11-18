@@ -1,5 +1,6 @@
 using UnityEngine;
 using Untai.Core;
+using Untai.Data;
 using Untai.Player;
 
 namespace Untai.Level
@@ -14,6 +15,20 @@ namespace Untai.Level
         public float killHeight = -8f;
         public PlayerHealth player;
         public bool useHeightCheck = true;
+
+        /// <summary>Ambil KillZone di scene, atau buat dari prefab / objek kosong.</summary>
+        public static KillZone FindOrCreate()
+        {
+            var existing = FindAnyObjectByType<KillZone>();
+            if (existing != null) return existing;
+            var prefab = PrefabLibrary.Get(l => l.killZone);
+            if (prefab != null)
+            {
+                var k = Prims.Spawn(prefab, Vector3.zero, null).GetComponent<KillZone>();
+                if (k != null) return k;
+            }
+            return new GameObject("KillZone").AddComponent<KillZone>();
+        }
 
         void Update()
         {
