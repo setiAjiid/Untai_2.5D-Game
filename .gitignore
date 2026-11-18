@@ -112,3 +112,13 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# --- Untai: tambahan proyek ---
+# Folder IDE dan file OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+# Folder build lokal dan hasil export
+/[Bb]uilds/
+/[Oo]bj/

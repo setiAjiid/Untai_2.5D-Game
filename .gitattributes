@@ -169,3 +169,11 @@ Packages/packages-lock.json linguist-generated
 
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+
+# --- Untai: tambahan proyek ---
+# Dokumen teks proyek tetap teks biasa (bukan LFS)
+*.md                    text eol=lf
+# Aset audio/gambar tambahan yang mungkin dipakai belakangan
+*.flac                  lfs
+*.exr                   lfs
+*.hdr                   lfs
