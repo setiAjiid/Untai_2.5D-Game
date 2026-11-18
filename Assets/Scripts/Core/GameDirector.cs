@@ -61,6 +61,7 @@ namespace Untai.Core
             kill.killHeight = Level.killHeight;
 
             gameObject.AddComponent<DebugTools.DebugHud>().thread = Thread;
+            gameObject.AddComponent<DebugTools.DemoHotkeys>();
             CameraRig.SideFollowCamera.Attach(Player.transform);
 
             // Parameter awal DDA diterapkan sebelum chunk pertama dirakit.
