@@ -59,6 +59,7 @@ Prototipe siap demo (Project EAS). Yang sudah berjalan:
 
 - [x] Gerak samping 2.5D, lompat variabel, coyote time, kamera follow
 - [x] Tandem: dua karakter terikat untai, ganti karakter, menggantung/berayun, panjat, tarik pasangan, kait jangkar
+- [x] **Partner AI (Utility AI)**: karakter yang tidak dikendalikan berjalan sendiri (Follow, Wait, Assist), perintah manual E, tingkat bantuan diatur DDA
 - [x] Checkpoint, kill zone, jebakan, goal, respawn
 - [x] **PCG**: 12 chunk (mudah/sedang/sulit), perakit weighted ber-seed, tolak sambungan, validasi BFS
 - [x] **DDA**: rolling window performa, tiga kondisi, pemetaan parameter dengan clamp dan step limit
@@ -139,20 +140,44 @@ Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukur
 |---|---|
 | A/D atau panah | Gerak; saat menggantung: memompa ayunan |
 | Space | Lompat (tahan = lebih tinggi); saat menggantung: lompat dari untai; saat mengait jangkar: lepas dengan dorongan |
-| Tab / Q | Ganti karakter aktif (karakter lain diam menjadi tumpuan) |
+| Tab / Q | Ganti karakter aktif; karakter lain dijalankan partner AI |
+| E | Perintah partner bergantian: "Tunggu di sini" / "Ikuti saya" |
 | W/S | Panjat / turuni untai saat menggantung (dari pasangan atau jangkar) |
 | Tahan F | Gulung untai: tarik pasangan mendekat / naik |
 | Tahan Shift / J | Kaitkan untai ke jangkar (bola biru, menyala kuning bila terjangkau) |
 | R | Respawn keduanya di checkpoint |
 
+### Partner AI
+
+Cukup kendalikan satu karakter; karakter lain dijalankan **PartnerBrain** (Utility AI) lewat `PlayerMotor`
+yang sama (input disimulasikan, tanpa teleport). Saat Tab ditekan, peran bertukar.
+
+| Aksi | Perilaku |
+|---|---|
+| **Follow** | Mengikuti sampai jarak nyaman; melompati dinding rendah, celah kecil, dan jebakan; menyeberang jurang dengan menggantung lalu memanjat untai sendiri; minta ditarik bila tertahan di bawah tebing |
+| **Wait** | Diam sebagai tumpuan untai (otomatis saat karakter aktif menggantung atau mengait jangkar) |
+| **Assist** | Pergi ke tepi jurang di depan karakter aktif lalu menunggu sebagai tumpuan ayunan |
+
+- Skor tiap aksi (0 sampai 1) dihitung dari jarak ke karakter aktif, kelonggaran untai (jarak / panjang
+  untai), jurang atau tebing di depan karakter aktif, status menggantung/mengait jangkar, dan perintah E.
+  Pergantian aksi memakai histeresis (jeda minimal 1 sampai 2 detik dan selisih skor 0,1), kecuali
+  pengaman: partner langsung menjadi tumpuan saat karakter aktif bergantung pada untai.
+- Perintah E menambah skor aksi terkait (+0,5) dan meredam aksi lain (x0,7): berpengaruh besar tetapi tidak
+  mutlak.
+- `partnerAssistLevel` (DDA) membuat partner lebih cepat menyusul, memanjat, bereaksi, dan pulih; pemain yang
+  sering mati mendapat partner yang lebih cekatan dan menempel lebih dekat (`partnerFollowDistance`).
+- Bila partner tidak maju beberapa detik (5 sampai 10 detik tergantung assist), ia dianggap terjebak: keduanya
+  respawn bersama di dekat karakter aktif (atau di checkpoint bila karakter aktif sedang di udara).
+
 ### Cara menyelesaikan rintangan
 
-- **Jurang lebar tanpa jangkar:** biarkan satu karakter berdiri di tepi (tumpuan), jalankan karakter lain
-  turun dari tepi lalu pompa ayunan (A/D) dan lompat dari untai (Space) ke seberang. Ganti karakter (Tab),
-  turunkan karakter kedua ke jurang; ia menggantung pada pasangannya, lalu panjat (W) dan lompat naik,
-  atau tahan F dari karakter di seberang untuk menariknya.
+- **Jurang lebar tanpa jangkar:** dekati tepi jurang; partner otomatis Assist (berdiri di tepi sebagai
+  tumpuan). Jalan turun dari tepi, pompa ayunan (A/D), lalu lompat dari untai (Space) ke seberang. Partner
+  menyusul sendiri: ia turun ke jurang, menggantung pada karaktermu, memanjat, lalu melompat naik.
+  Tahan F untuk menariknya lebih cepat.
 - **Tebing lebih tinggi dari lompatan:** dekati jangkar, tahan Shift untuk mengait, panjat (W), ayun, lalu
-  Space untuk melompat ke atas tebing. Setelah itu tarik pasangan dengan F atau ganti karakter dan ulangi.
+  Space untuk melompat ke atas tebing. Partner menunggu, lalu meminta ditarik naik dengan untai; tahan F
+  untuk membantu.
 - **Untai terlalu tegang:** karakter aktif tertahan bila terlalu jauh dari pasangannya; ganti karakter
   atau tarik pasangan untuk maju bersama.
 
@@ -168,5 +193,6 @@ Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukur
 | F7 | Level berikutnya |
 | F8 | Reset DDA |
 | F9 | Lompat ke chunk berikutnya |
+| F10 | Paksa aksi partner bergiliran: Follow, Wait, Assist, lalu kembali bebas (Utility AI) |
 
 Alur sistem, keputusan desain per fase, dan skenario demo: [docs/DEV_LOG.md](docs/DEV_LOG.md).

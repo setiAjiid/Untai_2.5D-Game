@@ -189,6 +189,31 @@ Satu entri per fase: tujuan, file utama, dan keputusan penting.
   - Enemy mengincar karakter terdekat dari keduanya.
   - Terinspirasi game bertema dua karakter terikat benang; nama, level, dan visual tetap milik Untai.
 
+## Fase 10: Partner AI dan enemy terlihat (branch `feat/partner-ai`)
+
+- **Tujuan:** satu pemain tidak perlu bergantian mengendalikan dua karakter; enemy selalu terlihat.
+- **File utama:** `AI/PartnerBrain.cs`, `Player/IMotorInput.cs`, `Player/Tandem.cs`, `Thread/TandemRope.cs`,
+  `DDA/DifficultyMapper.cs`, `Level/ChunkBuilder.cs`, `Debug/DebugHud.cs`.
+- **Keputusan:**
+  - `PlayerMotor` membaca input dari `IMotorInput`; null = pemain, `PartnerBrain` = AI. Partner bergerak
+    lewat motor dan untai yang sama, tidak ada teleport kecuali respawn bersama saat terjebak.
+  - Utility AI dengan tiga aksi (Follow, Wait, Assist). Faktor skor: jarak, kelonggaran untai, jurang/tebing
+    di depan karakter aktif (raycast 10 kali per detik), status menggantung/kait jangkar, dan perintah E.
+    Histeresis waktu dan nilai mencegah aksi berganti bolak-balik; pengecualian hanya untuk keselamatan untai.
+  - Partner yang menggantung meminta `TandemRope` memanjat dan melompat dari untai (jalur fisika yang sama
+    dengan pemain); partner yang tertahan di bawah tebing meminta untai digulung.
+  - DDA: `partnerAssistLevel` (mudah 1,0 sampai sulit 0,3) dan `partnerFollowDistance` (1,8 sampai 3,2) ikut
+    tercatat di log keputusan.
+  - Enemy: rentang jumlah 1 sampai 3, minimal satu per chunk setelah pengantar, semua chunk punya titik spawn,
+    dan enemy yang berbagi platform disebar agar tidak bertumpuk. Target dipilih dari kedua karakter
+    (terlihat dan terdekat lebih dulu).
+  - Kemudahan: panjang untai awal 11 (rentang DDA 12 sampai 9), kenaikan kesulitan DDA maksimal 0,06 per
+    evaluasi (penurunan tetap 0,12). Kelayakan semua chunk diuji ulang untuk rentang baru.
+  - PerformanceTracker mencatat jumlah Tab dan jumlah partner terjebak; HUD panel [6] menampilkan aksi,
+    skor, perintah, dan angka tersebut.
+  - Verifikasi: compile per commit dan smoke test Play mode di batchmode tanpa error. Player loop tidak
+    berjalan di batchmode tanpa grafis, sehingga perilaku gerak partner perlu dicoba langsung di Editor.
+
 ---
 
 ## Alur Sistem
@@ -235,6 +260,8 @@ HUD menampilkan alur ini sebagai panel bernomor [1] Performance, [2] DDA, [3] Pa
 | F7 | Level berikutnya |
 | F8 | Reset DDA ke skor awal |
 | F9 | Lompat ke chunk berikutnya |
+| F10 | Paksa aksi partner: Follow, Wait, Assist, bebas |
+| E | Perintah partner: Tunggu di sini / Ikuti saya |
 
 ## Skenario Demo yang Disarankan (sekitar 5 menit)
 
