@@ -5,12 +5,13 @@ using Untai.Thread;
 
 namespace Untai.AI
 {
-    public enum PartnerAction { Follow, Wait }
+    public enum PartnerAction { Follow, Wait, Assist }
 
     /// <summary>
     /// AI untuk karakter Tandem yang tidak dikendalikan pemain. Menggerakkan PlayerMotor yang sama
     /// lewat IMotorInput (tanpa teleport), sehingga partner tunduk pada fisika dan untai yang sama.
-    /// Aksi: Follow (mengikuti sampai jarak nyaman) dan Wait (diam sebagai tumpuan untai).
+    /// Aksi: Follow (mengikuti sampai jarak nyaman), Wait (diam sebagai tumpuan untai), dan
+    /// Assist (ke tepi jurang di depan karakter aktif lalu menunggu sebagai tumpuan ayunan).
     /// Saat menggantung, partner memanjat untai sendiri lalu melompat ke tepi platform.
     /// </summary>
     [DefaultExecutionOrder(-10)] // isi input sebelum PlayerMotor membacanya
@@ -30,7 +31,7 @@ namespace Untai.AI
         public float stuckTimeout = 8f;
 
         public PartnerAction Current { get; private set; } = PartnerAction.Follow;
-        public readonly float[] Scores = new float[2];
+        public readonly float[] Scores = new float[3];
 
         // ---- IMotorInput ----
         float _h;
@@ -71,16 +72,97 @@ namespace Untai.AI
         /// <summary>Kondisi dasar: karakter aktif sedang bergantung pada untai (butuh tumpuan).</summary>
         protected bool LeaderOnRope => rope.Hooked != null || rope.Hanging == Leader;
 
+        [Header("Utility AI")]
+        [Tooltip("Waktu minimal sebelum boleh berganti aksi (histeresis waktu).")]
+        public float minHoldTime = 1.5f;
+        [Tooltip("Skor aksi baru harus melebihi aksi sekarang sebesar ini (histeresis nilai).")]
+        public float switchMargin = 0.1f;
+
+        float _lastSwitch = -10f;
+        float _nextSense;
+        bool _gapAhead;
+        bool _cliffAhead;
+        float _assistX;
+
+        public bool GapAhead => _gapAhead;
+        public bool CliffAhead => _cliffAhead;
+
+        /// <summary>
+        /// Skor kegunaan 0..1 tiap aksi dari faktor: jarak ke karakter aktif, kelonggaran untai
+        /// (jarak / panjang untai), jurang atau tebing di depan karakter aktif, dan apakah karakter
+        /// aktif sedang menggantung/mengait jangkar. Aksi berganti hanya bila lolos histeresis.
+        /// </summary>
         protected virtual void ScoreActions()
         {
-            float dist = Vector2.Distance(Me.transform.position, Leader.transform.position);
+            if (Time.time >= _nextSense) { _nextSense = Time.time + 0.1f; SenseLeader(); }
+
+            Vector3 me = Me.transform.position;
+            float dist = Vector2.Distance(me, Leader.transform.position);
             float slack = rope.MaxLength > 0f ? Mathf.Clamp01(dist / rope.MaxLength) : 0f;
-            float follow = Mathf.Clamp01((dist - comfortDistance) / 4f) * 0.8f + 0.2f * slack;
-            if (LeaderOnRope) follow *= 0.1f;
-            float wait = LeaderOnRope ? 0.9f : dist <= comfortDistance ? 0.5f : 0.15f;
-            Scores[0] = follow;
-            Scores[1] = wait;
-            Current = follow >= wait ? PartnerAction.Follow : PartnerAction.Wait;
+            bool onRope = LeaderOnRope;
+
+            float follow = Mathf.Clamp01((dist - comfortDistance) / 4f) * 0.7f + 0.3f * slack;
+            float wait = 0.15f + (dist <= comfortDistance ? 0.25f : 0f) + (_cliffAhead ? 0.2f : 0f);
+            float assist = _gapAhead ? 0.55f + 0.35f * Mathf.Clamp01(1f - Mathf.Abs(me.x - _assistX) / 6f) : 0f;
+            if (onRope)
+            {
+                // Karakter aktif bergantung pada untai: partner harus menjadi tumpuan.
+                follow *= 0.1f;
+                assist *= 0.3f;
+                wait += 0.7f;
+            }
+
+            Scores[(int)PartnerAction.Follow] = Mathf.Clamp01(follow);
+            Scores[(int)PartnerAction.Wait] = Mathf.Clamp01(wait);
+            Scores[(int)PartnerAction.Assist] = Mathf.Clamp01(assist);
+            ApplyModifiers();
+            Choose(onRope);
+        }
+
+        /// <summary>Titik tambah bobot (perintah manual, paksaan demo).</summary>
+        protected virtual void ApplyModifiers() { }
+
+        void Choose(bool onRope)
+        {
+            int best = 0;
+            for (int i = 1; i < Scores.Length; i++) if (Scores[i] > Scores[best]) best = i;
+            var next = (PartnerAction)best;
+            if (next == Current) return;
+
+            // Keselamatan: saat karakter aktif bergantung pada untai, langsung menjadi tumpuan.
+            bool safety = onRope && next == PartnerAction.Wait;
+            bool held = Time.time - _lastSwitch < minHoldTime;
+            bool margin = Scores[best] > Scores[(int)Current] + switchMargin;
+            if (safety || (!held && margin))
+            {
+                Current = next;
+                _lastSwitch = Time.time;
+            }
+        }
+
+        /// <summary>Periksa jurang atau tebing di depan karakter aktif (arah hadapnya).</summary>
+        void SenseLeader()
+        {
+            _gapAhead = false;
+            _cliffAhead = false;
+            if (!Leader.IsGrounded) return;
+            Vector3 l = Leader.transform.position;
+            float dir = Leader.FacingSign;
+            var p = GameplayParameters.Active;
+            float limit = 5f;
+            if (StaticRay(l, new Vector3(dir, 0f, 0f), limit, out var wall))
+            {
+                limit = wall.distance;
+                _cliffAhead = StaticRay(l + Vector3.up * (p.JumpHeight * 0.85f), new Vector3(dir, 0f, 0f), limit + 0.3f, out _);
+            }
+            for (float d = 0.5f; d <= limit; d += 0.5f)
+            {
+                if (GroundBelow(l + new Vector3(dir * d, 0f, 0f), 3f)) continue;
+                _gapAhead = true;
+                // Tumpuan sedikit di belakang tepi jurang.
+                _assistX = l.x + dir * (d - 0.5f) - dir * 0.8f;
+                break;
+            }
         }
 
         // ------------------------------------------------------------ eksekusi
@@ -100,8 +182,20 @@ namespace Untai.AI
                 return;
             }
 
-            if (Current == PartnerAction.Wait) { _h = 0f; TrackProgress(false); return; }
-            MoveToward(Leader.transform.position.x, comfortDistance, true);
+            switch (Current)
+            {
+                case PartnerAction.Wait:
+                    _h = 0f;
+                    TrackProgress(false);
+                    break;
+                case PartnerAction.Assist:
+                    // Ke tepi jurang di depan karakter aktif, lalu diam sebagai tumpuan ayunan.
+                    MoveToward(_assistX, 0.3f, false);
+                    break;
+                default:
+                    MoveToward(Leader.transform.position.x, comfortDistance, true);
+                    break;
+            }
         }
 
         /// <summary>Berjalan ke targetX sampai jarak tolerance; tangani dinding, tepi jurang, dan tebing.</summary>
