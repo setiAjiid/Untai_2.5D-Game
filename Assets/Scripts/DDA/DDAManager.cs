@@ -92,6 +92,9 @@ namespace Untai.DDA
         public float highThreshold = 0.72f;  // di atas ini: terlalu mudah
         public float maxStep = 0.12f;
         public float minStep = 0.04f;
+        [Tooltip("Batas kenaikan per evaluasi (lebih kecil dari penurunan: naik pelan, turun cepat).")]
+        public float maxStepUp = 0.06f;
+        public float minStepUp = 0.02f;
 
         public float Difficulty { get; private set; } = 0.4f;
         public float Performance { get; private set; } = 0.6f;
@@ -123,7 +126,7 @@ namespace Untai.DDA
             if (State == DifficultyState.Struggling)
                 delta = -Mathf.Clamp((lowThreshold - Performance) / lowThreshold * maxStep * 2f, minStep, maxStep);
             else if (State == DifficultyState.TooEasy)
-                delta = Mathf.Clamp((Performance - highThreshold) / (1f - highThreshold) * maxStep * 2f, minStep, maxStep);
+                delta = Mathf.Clamp((Performance - highThreshold) / (1f - highThreshold) * maxStepUp * 2f, minStepUp, maxStepUp);
             Difficulty = Mathf.Clamp01(Difficulty + delta);
 
             var d = new DDADecision { performance = Performance, state = State, before = before, after = Difficulty };
