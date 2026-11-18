@@ -25,6 +25,7 @@ namespace Untai.Core
             Prims.Box("Step", new Vector3(8f, 0.75f, 0f), new Vector3(3f, 1.5f, 3f), new Color(0.35f, 0.4f, 0.45f), root);
             var player = PlayerMotor.CreatePlayer(new Vector3(0f, 1.5f, 0f));
             player.gameObject.AddComponent<Thread.ThreadController>();
+            player.gameObject.AddComponent<Thread.ThreadRenderer>();
             CameraRig.SideFollowCamera.Attach(player.transform);
         }
 

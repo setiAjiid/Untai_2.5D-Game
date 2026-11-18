@@ -20,6 +20,8 @@ namespace Untai.Thread
         public float Remaining => Mathf.Max(0f, maxLength - Used);
         public float RemainingRatio => maxLength > 0f ? Remaining / maxLength : 0f;
         public bool IsTaut => Used >= maxLength - 0.05f;
+        /// <summary>Jangkar yang sedang dipakai mengayun (null jika tidak mengayun).</summary>
+        public Transform SwingAnchor { get; set; }
 
         PlayerMotor _motor;
 
