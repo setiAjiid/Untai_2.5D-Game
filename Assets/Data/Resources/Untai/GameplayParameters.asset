@@ -15,9 +15,9 @@ MonoBehaviour:
   moveSpeed: 6
   jumpVelocity: 11
   gravityMultiplier: 2.5
-  threadLength: 26
+  threadLength: 9
   anchorRange: 7
-  maxGapWidth: 4.5
+  maxGapWidth: 6
   trapDensity: 0.3
   enemyCount: 1
   checkpointInterval: 2

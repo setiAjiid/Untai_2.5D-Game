@@ -15,14 +15,15 @@ namespace Untai.EditorTools
     public static class ChunkAssetGenerator
     {
         const string DataRoot = "Assets/Data/Resources/Untai";
-        const string ChunkFolder = DataRoot + "/Chunks";
+        const string ChunkFolder = DataRoot + "/TandemChunks";
 
         static ChunkAssetGenerator()
         {
             EditorApplication.delayCall += () =>
             {
                 if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-                if (AssetDatabase.FindAssets("t:ChunkDefinition", new[] { ChunkFolder }).Length == 0)
+                if (!AssetDatabase.IsValidFolder(ChunkFolder) ||
+                    AssetDatabase.FindAssets("t:ChunkDefinition", new[] { ChunkFolder }).Length == 0)
                     GenerateSampleChunks();
                 if (AssetDatabase.LoadAssetAtPath<GameplayParameters>(DataRoot + "/GameplayParameters.asset") == null)
                     CreateParametersAsset();

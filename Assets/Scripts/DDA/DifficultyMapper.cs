@@ -22,13 +22,13 @@ namespace Untai.DDA
             public float Max => Mathf.Max(easy, hard);
         }
 
-        public Range gap = new Range(3.5f, 7.5f, 1.0f);
+        public Range gap = new Range(5.5f, 8f, 1.0f);
         public Range trap = new Range(0.1f, 0.85f, 0.2f);
         public Range enemy = new Range(0f, 3f, 1f);
         public Range aggression = new Range(0.1f, 1f, 0.25f);
         public Range checkpoint = new Range(1f, 3f, 1f);
-        public Range thread = new Range(34f, 24f, 3f);       // makin sulit, benang makin pendek
-        public Range anchor = new Range(7.5f, 5.0f, 0.6f);   // makin sulit, jangkauan jangkar makin pendek
+        public Range thread = new Range(10f, 8f, 0.6f);      // panjang untai Tandem: makin sulit makin pendek
+        public Range anchor = new Range(7.5f, 6.0f, 0.5f);   // makin sulit, jangkauan jangkar makin pendek
         public Range easyWeight = new Range(1f, 0.1f, 0.3f);
         public Range mediumWeight = new Range(0.4f, 0.8f, 0.2f);
         public Range hardWeight = new Range(0f, 1f, 0.3f);

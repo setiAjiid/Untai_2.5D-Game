@@ -19,8 +19,8 @@ namespace Untai.Data
         public float gravityMultiplier = 2.5f;
 
         [Header("Benang")]
-        [Tooltip("Panjang benang dari checkpoint (satuan dunia).")]
-        public float threadLength = 26f;
+        [Tooltip("Panjang untai yang mengikat kedua karakter Tandem (satuan dunia).")]
+        public float threadLength = 9f;
         [Tooltip("Jangkauan maksimum untuk mengait jangkar.")]
         public float anchorRange = 7f;
 

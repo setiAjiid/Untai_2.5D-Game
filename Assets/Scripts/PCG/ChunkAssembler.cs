@@ -22,7 +22,7 @@ namespace Untai.PCG
 
         public int maxAttempts = 12;
         public float maxStepUp = 1.5f;
-        public float maxStepDown = 3f;
+        public float maxStepDown = 3.5f;
 
         readonly List<ChunkDefinition> _library;
 
