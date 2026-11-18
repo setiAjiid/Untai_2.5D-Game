@@ -28,6 +28,23 @@ namespace Untai.Level
 
         static readonly List<int> s_Indices = new List<int>(8);
 
+        /// <summary>Lebar zona aman di tepi kiri platform (tempat mendarat) tanpa enemy dan jebakan.</summary>
+        public const float LandingSafeZone = 3f;
+
+        /// <summary>Jebakan tidak boleh di zona aman pendaratan (kiri) maupun tepat di tepi lompat (kanan).</summary>
+        static bool SafeForTrap(ChunkDefinition def, float x)
+        {
+            for (int i = 0; i < def.platforms.Count; i++)
+            {
+                var p = def.platforms[i];
+                if (x < p.x || x > p.Right) continue;
+                if (x - p.x < LandingSafeZone * 0.8f) return false;
+                if (p.Right - x < 1.2f) return false;
+                return true;
+            }
+            return true;
+        }
+
         /// <summary>Posisi relatif (0..1) enemy ke-k pada platformnya: disebar merata bila berbagi platform.</summary>
         static float SpreadT(ChunkDefinition def, List<int> order, int k, int count)
         {
@@ -75,6 +92,7 @@ namespace Untai.Level
             for (int i = 0; i < def.traps.Count; i++)
             {
                 if (Random.value >= trapDensity) continue;
+                if (!SafeForTrap(def, def.traps[i].x)) continue; // zona aman tepi platform
                 Trap.Create(new Vector3(offsetX + def.traps[i].x, def.traps[i].y, 0f), root);
                 trapCount++;
             }
@@ -92,12 +110,17 @@ namespace Untai.Level
             {
                 var plat = def.platforms[def.enemySpawns[s_Indices[k]].platform];
                 float left = offsetX + plat.x, right = offsetX + plat.Right;
+                // Zona aman pendaratan: enemy tidak berpatroli di bagian kiri platform tempat pemain tiba.
+                float minX = left + Mathf.Min(LandingSafeZone, plat.width * 0.45f);
+                float maxX = right - 0.5f;
+                if (maxX - minX < 1f) continue;
+                float x = Mathf.Lerp(left, right, SpreadT(def, s_Indices, k, count));
                 enemyOut.Add(new EnemySpawnInfo
                 {
                     // Beberapa enemy di platform yang sama disebar agar tidak bertumpuk di satu titik.
-                    position = new Vector3(Mathf.Lerp(left, right, SpreadT(def, s_Indices, k, count)), plat.top + 1f, 0f),
-                    minX = left + 0.5f,
-                    maxX = right - 0.5f
+                    position = new Vector3(Mathf.Clamp(x, minX, maxX), plat.top + 1f, 0f),
+                    minX = minX,
+                    maxX = maxX
                 });
             }
             return root;
