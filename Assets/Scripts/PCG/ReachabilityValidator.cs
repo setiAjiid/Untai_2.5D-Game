@@ -1,0 +1,129 @@
+using System.Collections.Generic;
+using UnityEngine;
+using Untai.Data;
+
+namespace Untai.PCG
+{
+    /// <summary>
+    /// Validasi jangkauan (logika murni). Platform dijadikan node graf; sisi i->j ada jika
+    /// pemain bisa melompat (berdasarkan jarak dan tinggi lompat) atau mengayun lewat jangkar
+    /// (berdasarkan jangkauan jangkar dan sisa benang). BFS mencari jalur dari platform masuk
+    /// (platform terakhir chunk sebelumnya) ke platform terakhir chunk kandidat.
+    /// </summary>
+    public class ReachabilityValidator
+    {
+        public struct Node
+        {
+            public float left, right, top;
+            public Node(float left, float right, float top) { this.left = left; this.right = right; this.top = top; }
+        }
+
+        /// <summary>Faktor aman: kemampuan pemain dianggap 85% dari batas fisika ideal.</summary>
+        public float safety = 0.85f;
+
+        public int LastNodeCount { get; private set; }
+        public int LastPathLength { get; private set; }
+        public int LastSwingEdges { get; private set; }
+
+        readonly List<Node> _nodes = new List<Node>(8);
+        readonly List<Vector2> _anchors = new List<Vector2>(4);
+        readonly int[] _dist = new int[16];
+        readonly Queue<int> _queue = new Queue<int>(16);
+
+        /// <summary>Jangkauan lompat horizontal untuk beda tinggi dh (positif = naik).</summary>
+        public float JumpReach(float dh, GameplayParameters p)
+        {
+            float reach = p.JumpDistance * safety;
+            if (dh > 0f) reach *= 1f - 0.5f * dh / p.JumpHeight;
+            else reach += p.moveSpeed * Mathf.Sqrt(2f * -dh / p.Gravity) * safety; // turun: waktu di udara bertambah
+            return reach;
+        }
+
+        public bool CanJump(Node a, Node b, GameplayParameters p)
+        {
+            float gap = Mathf.Max(0f, b.left - a.right);
+            float dh = b.top - a.top;
+            if (dh > p.JumpHeight * safety) return false;
+            return gap <= JumpReach(dh, p);
+        }
+
+        /// <summary>
+        /// Cek ayunan a->b lewat jangkar: tali dari tepi platform a ke jangkar harus muat dalam
+        /// jangkauan jangkar dan setengah panjang benang; titik terjauh ayunan (simetris pendulum)
+        /// ditambah lontaran saat lepas harus mencapai tepi platform b.
+        /// </summary>
+        public bool CanSwing(Node a, Node b, List<Vector2> anchors, GameplayParameters p)
+        {
+            float maxRope = Mathf.Min(p.anchorRange, p.threadLength * 0.5f);
+            Vector2 start = new Vector2(a.right, a.top + 1f);
+            for (int i = 0; i < anchors.Count; i++)
+            {
+                Vector2 an = anchors[i];
+                if (an.x < a.right - 1f || an.x > b.left + 1f) continue;
+                if (an.y - start.y < 0.5f) continue;
+                float rope = Vector2.Distance(an, start);
+                if (rope > maxRope) continue;
+                float dyB = an.y - (b.top + 1f);
+                if (dyB <= 0f) continue;
+                float horiz = dyB < rope ? Mathf.Sqrt(rope * rope - dyB * dyB) : 0f;
+                float reach = an.x + horiz + p.JumpDistance * 0.4f;
+                if (reach >= b.left + 0.3f) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Validasi chunk kandidat yang diletakkan pada offsetX setelah platform "entry".
+        /// Mengembalikan null bila lolos, atau alasan penolakan.
+        /// </summary>
+        public string Validate(Node entry, ChunkDefinition c, float offsetX, GameplayParameters p)
+        {
+            // Benang harus cukup untuk melintasi chunk dari checkpoint di awal chunk.
+            if (c.width + 2f > p.threadLength * 0.9f) return "lebih panjang dari benang";
+
+            _nodes.Clear();
+            _nodes.Add(entry);
+            for (int i = 0; i < c.platforms.Count && _nodes.Count < _dist.Length; i++)
+            {
+                var pl = c.platforms[i];
+                _nodes.Add(new Node(offsetX + pl.x, offsetX + pl.Right, pl.top));
+            }
+            _anchors.Clear();
+            for (int i = 0; i < c.anchors.Count; i++)
+                _anchors.Add(new Vector2(offsetX + c.anchors[i].x, c.anchors[i].y));
+
+            // BFS dari node 0 (platform masuk) ke node terakhir.
+            int n = _nodes.Count;
+            for (int i = 0; i < n; i++) _dist[i] = -1;
+            _dist[0] = 0;
+            _queue.Clear();
+            _queue.Enqueue(0);
+            int swingEdges = 0;
+            while (_queue.Count > 0)
+            {
+                int u = _queue.Dequeue();
+                for (int v = 0; v < n; v++)
+                {
+                    if (_dist[v] >= 0 || _nodes[v].left < _nodes[u].left) continue;
+                    bool jump = CanJump(_nodes[u], _nodes[v], p);
+                    bool swing = !jump && CanSwing(_nodes[u], _nodes[v], _anchors, p);
+                    if (!jump && !swing) continue;
+                    if (swing) swingEdges++;
+                    _dist[v] = _dist[u] + 1;
+                    _queue.Enqueue(v);
+                }
+            }
+
+            LastNodeCount = n;
+            LastPathLength = _dist[n - 1];
+            LastSwingEdges = swingEdges;
+            if (_dist[n - 1] >= 0) return null;
+
+            // Cari celah yang gagal untuk alasan yang informatif.
+            float worst = 0f;
+            for (int i = 1; i < n; i++) worst = Mathf.Max(worst, _nodes[i].left - _nodes[i - 1].right);
+            return "BFS gagal: celah " + worst.ToString("0.0") + " > lompat " +
+                   (p.JumpDistance * safety).ToString("0.0") + ", jangkar " + p.anchorRange.ToString("0.0");
+        }
+    }
+}

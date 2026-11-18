@@ -58,6 +58,8 @@ namespace Untai.Level
 
         List<ChunkDefinition> _library;
         ChunkAssembler _assembler;
+        readonly ReachabilityValidator _validator = new ReachabilityValidator();
+        ReachabilityValidator.Node _lastNode;
         Transform _root;
         float _cursorX;
         float _prevExit;
@@ -138,11 +140,18 @@ namespace Untai.Level
             }
             var p = GameplayParameters.Active;
             var pick = _assembler.Pick(Seed, index, _prevDef, _prevExit, p, ValidateCandidate);
+            // Jalankan ulang untuk chunk terpilih agar info BFS (node, panjang jalur) tercatat.
+            if (!pick.fallback && _validator.Validate(_lastNode, pick.def, _cursorX, p) == null)
+                pick.note += " | BFS " + _validator.LastNodeCount + " node, jalur " + _validator.LastPathLength +
+                             (_validator.LastSwingEdges > 0 ? ", ayun " + _validator.LastSwingEdges : "");
             Place(pick.def, pick, false);
         }
 
-        /// <summary>Hook validasi kandidat; null berarti lolos.</summary>
-        protected virtual string ValidateCandidate(ChunkDefinition c) => null;
+        /// <summary>Validasi kandidat dengan BFS jangkauan dari platform terakhir chunk sebelumnya.</summary>
+        string ValidateCandidate(ChunkDefinition c)
+        {
+            return _validator.Validate(_lastNode, c, _cursorX, GameplayParameters.Active);
+        }
 
         BuiltChunk Place(ChunkDefinition def, ChunkAssembler.PickResult pick, bool forceCheckpoint)
         {
@@ -193,6 +202,8 @@ namespace Untai.Level
 
             for (int i = 0; i < _spawnBuffer.Count; i++) EnemySpawnRequested?.Invoke(_spawnBuffer[i]);
 
+            var last = def.platforms[def.platforms.Count - 1];
+            _lastNode = new ReachabilityValidator.Node(_cursorX + last.x, _cursorX + last.Right, last.top);
             _cursorX += def.width;
             _prevExit = def.exitHeight;
             _prevDef = special ? null : def;
