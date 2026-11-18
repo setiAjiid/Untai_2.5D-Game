@@ -217,7 +217,9 @@ namespace Untai.EditorTools
             director.parameters = AssetDatabase.LoadAssetAtPath<GameplayParameters>(ParametersPath);
             director.prefabs = lib;
 
-            // Hapus objek pemain lama (versi satu karakter) bila masih ada.
+            // Hapus objek pemain lama (versi satu karakter) dan instance prefab yang asetnya sudah hilang.
+            foreach (var root in scene.GetRootGameObjects())
+                if (root.name == "Player" || PrefabUtility.IsPrefabAssetMissing(root)) Object.DestroyImmediate(root);
             foreach (var old in Object.FindObjectsByType<PlayerMotor>(FindObjectsSortMode.None))
                 if (old.name != "CharacterA" && old.name != "CharacterB") Object.DestroyImmediate(old.gameObject);
 
