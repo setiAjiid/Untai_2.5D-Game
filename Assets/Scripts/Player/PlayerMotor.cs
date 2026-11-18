@@ -34,6 +34,8 @@ namespace Untai.Player
         /// <summary>Saat true (misal sedang mengayun), motor tidak mengatur kecepatan horizontal.</summary>
         public bool ExternalControl { get; set; }
         public bool InputEnabled { get; set; } = true;
+        /// <summary>Sumber input; null = pemain (InputReader). Diisi PartnerBrain untuk karakter partner.</summary>
+        public IMotorInput InputSource { get; set; }
         public Rigidbody Body { get; private set; }
         public float FacingSign { get; private set; } = 1f;
 
@@ -94,8 +96,9 @@ namespace Untai.Player
         void Update()
         {
             if (!InputEnabled) return;
-            if (InputReader.JumpPressed) _jumpBufferTimer = jumpBufferTime;
-            _jumpHeld = InputReader.JumpHeld;
+            bool pressed = InputSource != null ? InputSource.JumpPressed : InputReader.JumpPressed;
+            if (pressed) _jumpBufferTimer = jumpBufferTime;
+            _jumpHeld = InputSource != null ? InputSource.JumpHeld : InputReader.JumpHeld;
         }
 
         void FixedUpdate()
@@ -106,7 +109,7 @@ namespace Untai.Player
             _jumpBufferTimer -= dt;
 
             Vector3 v = Body.linearVelocity;
-            float input = InputEnabled ? InputReader.Horizontal : 0f;
+            float input = !InputEnabled ? 0f : InputSource != null ? InputSource.Horizontal : InputReader.Horizontal;
             if (Mathf.Abs(input) > 0.01f) FacingSign = Mathf.Sign(input);
 
             if (!ExternalControl)

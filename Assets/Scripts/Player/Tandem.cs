@@ -74,11 +74,26 @@ namespace Untai.Player
             set { _locked = value; ApplyInput(); }
         }
 
+        IMotorInput _partnerInput;
+
+        /// <summary>
+        /// Sumber input AI untuk karakter yang tidak dikendalikan (PartnerBrain). Bila null,
+        /// karakter tidak aktif diam seperti sebelumnya. Peran bertukar otomatis saat Tab.
+        /// </summary>
+        public IMotorInput PartnerInput
+        {
+            get => _partnerInput;
+            set { _partnerInput = value; ApplyInput(); }
+        }
+
         void ApplyInput()
         {
             if (characterA == null || characterB == null) return;
-            characterA.InputEnabled = !_locked && Active == characterA;
-            characterB.InputEnabled = !_locked && Active == characterB;
+            var partner = Partner;
+            Active.InputSource = null;
+            Active.InputEnabled = !_locked;
+            partner.InputSource = _partnerInput;
+            partner.InputEnabled = !_locked && _partnerInput != null;
         }
 
         /// <summary>Posisi x terdepan dari kedua karakter (dipakai LevelBuilder untuk melacak chunk).</summary>

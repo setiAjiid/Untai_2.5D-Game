@@ -38,6 +38,7 @@ namespace Untai.Core
 
         public Tandem Tandem { get; private set; }
         public TandemRope Rope { get; private set; }
+        public PartnerBrain Partner { get; private set; }
         /// <summary>Karakter yang sedang dikendalikan.</summary>
         public PlayerMotor Player => Tandem != null ? Tandem.Active : null;
         public PlayerHealth Health => Tandem != null ? Tandem.ActiveHealth : null;
@@ -83,6 +84,12 @@ namespace Untai.Core
             if (Tandem == null) Tandem = Rope.gameObject.AddComponent<Tandem>();
             Tandem.Bind(a, b);
             Rope.Bind(Tandem);
+
+            // Partner AI: karakter yang tidak dikendalikan pemain dijalankan PartnerBrain.
+            Partner = Rope.GetComponent<PartnerBrain>();
+            if (Partner == null) Partner = Rope.gameObject.AddComponent<PartnerBrain>();
+            Partner.Bind(Tandem, Rope);
+            Tandem.PartnerInput = Partner;
 
             // Urutan alur: performa -> DDA -> parameter -> PCG dan AI.
             Tracker = GetOrAdd<PerformanceTracker>();

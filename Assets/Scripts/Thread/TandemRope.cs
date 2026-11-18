@@ -52,6 +52,14 @@ namespace Untai.Thread
         /// <summary>Karakter yang sedang menggantung/berayun pada untai (null bila tidak ada).</summary>
         public PlayerMotor Hanging { get; private set; }
 
+        // ---- Permintaan dari PartnerBrain (AI), diproses lewat jalur fisika yang sama dengan pemain ----
+        /// <summary>Gulung untai agar partner tertarik ke karakter aktif (misal tertahan di bawah tebing).</summary>
+        public bool PartnerReelRequest { get; set; }
+        /// <summary>0..1: kecepatan partner memanjat untai saat menggantung.</summary>
+        public float PartnerClimbRequest { get; set; }
+        /// <summary>Partner yang menggantung melompat dari untai ke arah karakter aktif.</summary>
+        public bool PartnerHangJumpRequest { get; set; }
+
         float _hookRope;
         bool _prevHookHeld;
         bool _jumpQueued;
@@ -187,7 +195,8 @@ namespace Untai.Thread
 
             // Panjang untai: digulung (F), dipanjat (W/S saat menggantung), atau diulur kembali ke maksimum.
             bool activeHangs = !aGround && bGround && Distance >= CurrentLength - 0.3f;
-            if (Reeling)
+            bool reel = Reeling || PartnerReelRequest;
+            if (reel)
                 CurrentLength = Mathf.Max(minLength, Mathf.Min(CurrentLength, Distance) - reelSpeed * dt);
             else if (activeHangs)
                 CurrentLength = Mathf.Clamp(CurrentLength - InputReader.Vertical * climbSpeed * dt, minLength, max);
@@ -198,7 +207,7 @@ namespace Untai.Thread
 
             // Tentukan siapa yang bergerak mengikuti batasan untai dan siapa yang menjadi tumpuan.
             PlayerMotor mover = null;
-            if (Reeling) mover = partner;                       // menarik pasangan
+            if (reel) mover = partner;                          // menarik pasangan (pemain F atau permintaan AI)
             else if (bGround && !aGround) mover = active;       // aktif menggantung dari pasangan
             else if (aGround && !bGround) mover = partner;      // pasangan menggantung dari aktif
             else if (aGround && bGround) mover = active;        // keduanya di tanah: aktif tertahan
@@ -221,6 +230,24 @@ namespace Untai.Thread
                 Hanging = mover;
                 mover.ExternalControl = true; // agar motor tidak meredam ayunan
             }
+            // Partner AI yang menggantung memanjat untai sendiri, lalu melompat ke tepi platform.
+            if (swinging && mover == partner && !reel)
+            {
+                if (PartnerClimbRequest > 0f)
+                    CurrentLength = Mathf.Max(minLength, CurrentLength - climbSpeed * PartnerClimbRequest * dt);
+                if (PartnerHangJumpRequest)
+                {
+                    PartnerHangJumpRequest = false;
+                    var gp = GameplayParameters.Active;
+                    Vector3 pv = partner.Body.linearVelocity;
+                    pv.y = gp.jumpVelocity * hangJumpFactor;
+                    pv.x = Mathf.Sign(active.Body.position.x - partner.Body.position.x) * gp.moveSpeed * 0.8f;
+                    partner.Body.linearVelocity = pv;
+                    partner.ExternalControl = false;
+                    return;
+                }
+            }
+
             Swing(mover, pivot, CurrentLength, mover == active, dt);
 
             // Lompat dari untai: karakter aktif yang menggantung bisa melompat naik ke tepi platform.
