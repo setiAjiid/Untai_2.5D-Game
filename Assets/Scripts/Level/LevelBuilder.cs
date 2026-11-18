@@ -143,7 +143,7 @@ namespace Untai.Level
             var p = GameplayParameters.Active;
             var pick = _assembler.Pick(Seed, index, _prevDef, _prevExit, p, ValidateCandidate);
             // Jalankan ulang untuk chunk terpilih agar info BFS (node, panjang jalur) tercatat.
-            if (!pick.fallback && _validator.Validate(_lastNode, pick.def, _cursorX, p) == null)
+            if (!pick.fallback && _validator.Validate(_lastNode, pick.def, _cursorX, p, ThreadBudgetFor(pick.def, p)) == null)
                 pick.note += " | BFS " + _validator.LastNodeCount + " node, jalur " + _validator.LastPathLength +
                              (_validator.LastSwingEdges > 0 ? ", ayun " + _validator.LastSwingEdges : "");
             Place(pick.def, pick, false);
@@ -152,7 +152,21 @@ namespace Untai.Level
         /// <summary>Validasi kandidat dengan BFS jangkauan dari platform terakhir chunk sebelumnya.</summary>
         string ValidateCandidate(ChunkDefinition c)
         {
-            return _validator.Validate(_lastNode, c, _cursorX, GameplayParameters.Active);
+            var p = GameplayParameters.Active;
+            return _validator.Validate(_lastNode, c, _cursorX, p, ThreadBudgetFor(c, p));
+        }
+
+        /// <summary>Apakah chunk ini akan diberi checkpoint di awalnya (aturan yang sama dengan Place).</summary>
+        bool WouldPlaceCheckpoint(ChunkDefinition def, GameplayParameters p)
+        {
+            return _chunksSinceCheckpoint >= p.checkpointInterval
+                   || _distSinceCheckpoint + def.width + 1.5f > _checkpointThread * 0.9f;
+        }
+
+        /// <summary>Sisa benang di awal chunk: dari checkpoint baru, atau sisa dari checkpoint sebelumnya.</summary>
+        float ThreadBudgetFor(ChunkDefinition def, GameplayParameters p)
+        {
+            return WouldPlaceCheckpoint(def, p) ? p.threadLength - 1f : _checkpointThread - _distSinceCheckpoint;
         }
 
         BuiltChunk Place(ChunkDefinition def, ChunkAssembler.PickResult pick, bool forceCheckpoint)
@@ -162,9 +176,7 @@ namespace Untai.Level
             bool special = def.id == "S0" || def.id == "G0";
 
             // Checkpoint: wajib bila interval tercapai atau benang tidak cukup sampai akhir chunk ini.
-            bool needCheckpoint = forceCheckpoint
-                                  || _chunksSinceCheckpoint >= p.checkpointInterval
-                                  || _distSinceCheckpoint + def.width + 1.5f > _checkpointThread * 0.9f;
+            bool needCheckpoint = forceCheckpoint || WouldPlaceCheckpoint(def, p);
             if (needCheckpoint)
             {
                 var cp = Checkpoint.Create(new Vector3(_cursorX + 1f, def.entryHeight, 0f), p.threadLength, _root);

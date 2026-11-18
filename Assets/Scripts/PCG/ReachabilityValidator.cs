@@ -54,7 +54,8 @@ namespace Untai.PCG
         /// </summary>
         public bool CanSwing(Node a, Node b, List<Vector2> anchors, GameplayParameters p)
         {
-            float maxRope = Mathf.Min(p.anchorRange, p.threadLength * 0.5f);
+            // Tali dibatasi jangkauan jangkar dan sisa benang di tepi platform a.
+            float maxRope = Mathf.Min(p.anchorRange, RemainingThreadAt(a.right));
             Vector2 start = new Vector2(a.right, a.top + 1f);
             for (int i = 0; i < anchors.Count; i++)
             {
@@ -72,12 +73,21 @@ namespace Untai.PCG
             return false;
         }
 
+        float _budgetX;
+        float _budget;
+
+        /// <summary>Perkiraan sisa benang (dengan faktor aman) pada posisi x.</summary>
+        public float RemainingThreadAt(float x) => (_budget - Mathf.Abs(x - _budgetX)) * 0.9f;
+
         /// <summary>
         /// Validasi chunk kandidat yang diletakkan pada offsetX setelah platform "entry".
+        /// threadBudget = sisa benang di awal chunk (dari checkpoint aktif saat itu).
         /// Mengembalikan null bila lolos, atau alasan penolakan.
         /// </summary>
-        public string Validate(Node entry, ChunkDefinition c, float offsetX, GameplayParameters p)
+        public string Validate(Node entry, ChunkDefinition c, float offsetX, GameplayParameters p, float threadBudget)
         {
+            _budgetX = offsetX;
+            _budget = threadBudget;
             // Benang harus cukup untuk melintasi chunk dari checkpoint di awal chunk.
             if (c.width + 2f > p.threadLength * 0.9f) return "lebih panjang dari benang";
 
@@ -123,7 +133,8 @@ namespace Untai.PCG
             float worst = 0f;
             for (int i = 1; i < n; i++) worst = Mathf.Max(worst, _nodes[i].left - _nodes[i - 1].right);
             return "BFS gagal: celah " + worst.ToString("0.0") + " > lompat " +
-                   (p.JumpDistance * safety).ToString("0.0") + ", jangkar " + p.anchorRange.ToString("0.0");
+                   (p.JumpDistance * safety).ToString("0.0") + ", tali maks " +
+                   Mathf.Min(p.anchorRange, RemainingThreadAt(offsetX)).ToString("0.0");
         }
     }
 }
