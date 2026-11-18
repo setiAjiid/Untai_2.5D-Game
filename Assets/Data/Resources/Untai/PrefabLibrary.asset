@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53f69b4215e4303033102cce0f1bc42c, type: 3}
+  m_Name: PrefabLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.Data.PrefabLibrary
+  player: {fileID: 6166555662919676156, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+  enemy: {fileID: 532761643315418971, guid: 5203499db94b9a94992d8bce905ac391, type: 3}
+  platform: {fileID: 2234531684796362206, guid: 4395aa7dba4e98d49875c0211ef23a4a, type: 3}
+  checkpoint: {fileID: 3934891052399667935, guid: 639beefef060e474c973ac54276cbcec, type: 3}
+  goal: {fileID: 7025945381430546810, guid: a8d3bdbbf35b5894a9255cc5549c2ad5, type: 3}
+  killZone: {fileID: 8918291591206889232, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+  trap: {fileID: 4290658742315069884, guid: 7ecff54831480c942bb3bc4700158fe5, type: 3}
+  anchor: {fileID: 5033215933968342059, guid: 05e0d2e75fed9b24288a9ca7935d3ed4, type: 3}
+  platformDepth: 3
+  pillarBottom: -5
