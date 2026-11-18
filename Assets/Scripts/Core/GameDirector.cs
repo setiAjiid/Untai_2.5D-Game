@@ -71,11 +71,66 @@ namespace Untai.Core
         /// <summary>Bangun level dari seed; riwayat performa dan DDA tetap berlanjut antar level.</summary>
         public void BuildLevel(int seed, int levelNumber)
         {
+            CancelInvoke(nameof(NextLevel));
+            _levelComplete = false;
+            Player.InputEnabled = true;
             Tracker.BeginLevel();
             Health.ResetFull();
             Level.BuildLevel(seed, levelNumber);
             var cam = Camera.main != null ? Camera.main.GetComponent<CameraRig.SideFollowCamera>() : null;
             if (cam != null) cam.Snap();
+            Flash("LEVEL " + levelNumber + "  |  SEED " + seed);
+        }
+
+        // ---------------- Game loop ----------------
+
+        public float nextLevelDelay = 2.5f;
+        bool _levelComplete;
+        string _message = "";
+        float _messageUntil;
+        GUIStyle _messageStyle;
+        readonly System.Random _seedRng = new System.Random();
+
+        void OnEnable() => GameEvents.GoalReached += OnGoalReached;
+        void OnDisable() => GameEvents.GoalReached -= OnGoalReached;
+
+        void OnGoalReached()
+        {
+            if (_levelComplete) return;
+            _levelComplete = true;
+            Player.InputEnabled = false;
+            Flash("LEVEL " + Level.LevelNumber + " SELESAI!  Lanjut ke level berikutnya...", nextLevelDelay);
+            Invoke(nameof(NextLevel), nextLevelDelay);
+        }
+
+        /// <summary>Seed level berikutnya diturunkan dari seed sekarang (deterministik).</summary>
+        public static int NextSeed(int seed) => (int)(((long)seed * 7919L + 104729L) % 99991L);
+
+        public void NextLevel() => BuildLevel(NextSeed(Level.Seed), Level.LevelNumber + 1);
+        public void RestartLevel() => BuildLevel(Level.Seed, Level.LevelNumber);
+        public void NewRandomSeed() => BuildLevel(_seedRng.Next(1000, 99999), Level.LevelNumber);
+
+        /// <summary>Pesan singkat di tengah layar.</summary>
+        public void Flash(string message, float duration = 2f)
+        {
+            _message = message;
+            _messageUntil = Time.time + duration;
+        }
+
+        void OnGUI()
+        {
+            if (Time.time > _messageUntil) return;
+            if (_messageStyle == null)
+            {
+                _messageStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 26, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold
+                };
+                _messageStyle.normal.textColor = new Color(1f, 0.9f, 0.4f);
+            }
+            var r = new Rect(0f, Screen.height * 0.25f, Screen.width, 50f);
+            GUI.Box(new Rect(Screen.width * 0.2f, r.y, Screen.width * 0.6f, r.height), GUIContent.none);
+            GUI.Label(r, _message, _messageStyle);
         }
     }
 }
