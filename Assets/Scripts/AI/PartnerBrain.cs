@@ -67,8 +67,24 @@ namespace Untai.AI
         {
             if (!Ready) { _h = 0f; return; }
             if (Core.InputReader.KeyDown(UnityEngine.InputSystem.Key.E)) ToggleCommand();
+            ApplyAssistLevel();
             ScoreActions();
             Act();
+        }
+
+        /// <summary>Nilai assist dari DDA (GameplayParameters) menentukan kecekatan partner.</summary>
+        public float AssistLevel { get; private set; }
+
+        void ApplyAssistLevel()
+        {
+            var p = GameplayParameters.Active;
+            float a = Mathf.Clamp01(p.partnerAssistLevel);
+            AssistLevel = a;
+            comfortDistance = Mathf.Max(1.2f, p.partnerFollowDistance);
+            speedFactor = Mathf.Lerp(0.85f, 1.15f, a);   // makin cekatan makin cepat menyusul
+            climbFactor = Mathf.Lerp(0.4f, 1f, a);       // memanjat untai lebih cepat
+            stuckTimeout = Mathf.Lerp(10f, 5f, a);       // lebih cepat pulih bila terjebak
+            minHoldTime = Mathf.Lerp(2f, 1f, a);         // bereaksi lebih cepat
         }
 
         // ------------------------------------------------------------ keputusan

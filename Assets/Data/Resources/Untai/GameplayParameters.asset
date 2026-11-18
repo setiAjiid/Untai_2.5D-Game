@@ -25,3 +25,5 @@ MonoBehaviour:
   mediumWeight: 0.6
   hardWeight: 0.2
   aggression: 0.4
+  partnerAssistLevel: 0.6
+  partnerFollowDistance: 2.5

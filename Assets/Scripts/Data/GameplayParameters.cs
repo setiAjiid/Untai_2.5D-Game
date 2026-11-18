@@ -39,6 +39,10 @@ namespace Untai.Data
 
         [Header("Game AI")]
         [Range(0f, 1f)] public float aggression = 0.4f;
+        [Tooltip("Kecekatan partner AI: makin tinggi makin cepat menyusul, memanjat, dan bereaksi.")]
+        [Range(0f, 1f)] public float partnerAssistLevel = 0.6f;
+        [Tooltip("Jarak nyaman partner saat Follow (satuan dunia).")]
+        public float partnerFollowDistance = 2.5f;
 
         // ---------- Turunan (dipakai validator dan AI) ----------
 
@@ -66,6 +70,7 @@ namespace Untai.Data
             checkpointInterval = o.checkpointInterval;
             easyWeight = o.easyWeight; mediumWeight = o.mediumWeight; hardWeight = o.hardWeight;
             aggression = o.aggression;
+            partnerAssistLevel = o.partnerAssistLevel; partnerFollowDistance = o.partnerFollowDistance;
         }
 
         // ---------- Instans runtime ----------

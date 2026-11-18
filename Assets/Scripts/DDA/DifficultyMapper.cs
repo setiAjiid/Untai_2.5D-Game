@@ -32,6 +32,9 @@ namespace Untai.DDA
         public Range easyWeight = new Range(1f, 0.1f, 0.3f);
         public Range mediumWeight = new Range(0.4f, 0.8f, 0.2f);
         public Range hardWeight = new Range(0f, 1f, 0.3f);
+        // Partner AI: pemain yang kesulitan dibantu partner yang lebih cekatan dan menempel lebih dekat.
+        public Range partnerAssist = new Range(1f, 0.3f, 0.15f);
+        public Range partnerFollow = new Range(1.8f, 3.2f, 0.4f);
 
         /// <summary>Terapkan langsung tanpa step limit (dipakai saat awal / reset).</summary>
         public void ApplyImmediate(float d, GameplayParameters p)
@@ -46,6 +49,8 @@ namespace Untai.DDA
             p.easyWeight = easyWeight.Target(d);
             p.mediumWeight = mediumWeight.Target(d);
             p.hardWeight = hardWeight.Target(d);
+            p.partnerAssistLevel = partnerAssist.Target(d);
+            p.partnerFollowDistance = partnerFollow.Target(d);
         }
 
         /// <summary>
@@ -64,6 +69,8 @@ namespace Untai.DDA
             p.easyWeight = Step("wE", p.easyWeight, easyWeight, d, changes, "0.00");
             p.mediumWeight = Step("wM", p.mediumWeight, mediumWeight, d, changes, "0.00");
             p.hardWeight = Step("wH", p.hardWeight, hardWeight, d, changes, "0.00");
+            p.partnerAssistLevel = Step("partner", p.partnerAssistLevel, partnerAssist, d, changes, "0.00");
+            p.partnerFollowDistance = Step("ikut", p.partnerFollowDistance, partnerFollow, d, changes, "0.0");
         }
 
         static float Step(string label, float current, Range r, float d, StringBuilder changes, string fmt,
