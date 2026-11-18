@@ -155,6 +155,15 @@ namespace Untai.AI
             if (stateLabel != null) stateLabel.text = "E" + Id + " " + StateLabel(s);
         }
 
+        PlayerHealth PickTarget(PlayerHealth a, PlayerHealth b)
+        {
+            Vector3 me = transform.position;
+            bool seeA = CanSee(a), seeB = CanSee(b);
+            float da = (a.transform.position - me).sqrMagnitude, db = (b.transform.position - me).sqrMagnitude;
+            if (seeA != seeB) return seeA ? a : b;
+            return da <= db ? a : b;
+        }
+
         public static string StateLabel(EnemyState s)
         {
             switch (s)
@@ -167,10 +176,12 @@ namespace Untai.AI
         }
 
         /// <summary>Pemain terlihat jika dalam jarak deteksi, setinggi platform, dan berada di area platform.</summary>
-        bool CanSeeTarget()
+        bool CanSeeTarget() => CanSee(Target);
+
+        bool CanSee(PlayerHealth target)
         {
-            if (Target == null) return false;
-            Vector3 p = Target.transform.position;
+            if (target == null) return false;
+            Vector3 p = target.transform.position;
             float dx = p.x - transform.position.x;
             float dy = p.y - transform.position.y;
             return Mathf.Abs(dx) <= detectRange && Mathf.Abs(dy) <= 2.5f && p.x >= minX - 1.5f && p.x <= maxX + 1.5f;
@@ -178,9 +189,11 @@ namespace Untai.AI
 
         void Update()
         {
+            // Kedua karakter (yang dikendalikan pemain maupun partner AI) sama-sama target:
+            // pilih yang terlihat dan terdekat; bila tak ada yang terlihat, yang terdekat.
             var tandem = Player.Tandem.Instance;
             if (tandem != null && tandem.characterA != null && tandem.characterB != null)
-                Target = tandem.ClosestTo(transform.position);
+                Target = PickTarget(tandem.characterA.GetComponent<PlayerHealth>(), tandem.characterB.GetComponent<PlayerHealth>());
 
             float dt = Time.deltaTime;
             bool sees = CanSeeTarget();

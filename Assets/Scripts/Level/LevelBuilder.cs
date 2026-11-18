@@ -191,7 +191,8 @@ namespace Untai.Level
 
             _spawnBuffer.Clear();
             int chunkSeed = ChunkAssembler.DeriveSeed(Seed, index, 999);
-            ChunkBuilder.Build(def, _cursorX, _root, special ? 0f : p.trapDensity, special ? 0 : p.enemyCount,
+            // Setelah chunk pengantar, chunk dengan titik spawn selalu mendapat minimal satu enemy.
+            ChunkBuilder.Build(def, _cursorX, _root, special ? 0f : p.trapDensity, special ? 0 : Mathf.Max(1, p.enemyCount),
                 chunkSeed, _spawnBuffer, out int traps);
 
             var bc = new BuiltChunk
