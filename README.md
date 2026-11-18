@@ -76,6 +76,39 @@ Prototipe siap demo (Project EAS). Yang sudah berjalan:
    jalankan menu **Untai > Build Prefabs and Scene** (aman diulang: prefab yang sudah diedit tidak ditimpa).
    Aset chunk dibuat lewat **Untai > Generate Sample Chunks** (juga otomatis saat Editor dimuat).
 
+## Langkah Manual
+
+Sebagian besar pengaturan sudah otomatis. Yang masih perlu dilakukan sendiri:
+
+**Wajib (sekali, setelah clone/pull)**
+
+1. Buka proyek di **Unity 6000.3.23f1** dan tunggu impor selesai. Jika Editor sudah terbuka saat pull,
+   klik jendela Unity agar file baru ter-import dan skrip ter-compile.
+2. Buka `Assets/Scenes/Untai_Main.unity`. Unity membuka scene terakhir yang dipakai (sering
+   `SampleScene`), jadi scene utama harus dibuka manual sekali. Scene lain tetap bisa dimainkan,
+   tetapi Hierarchy-nya tidak berisi objek Untai.
+3. Tekan **Play** dan pastikan HUD muncul (seed, panel [1] sampai [5]). Klik jendela Game agar tombol
+   keyboard (A/D, Space, F1 sampai F9) terbaca.
+
+**Opsional / bila diperlukan**
+
+- **Aset chunk:** Editor membuat `Assets/Data/Resources/Untai/Chunks/*.asset` otomatis saat proyek dimuat.
+  File ini tidak wajib (game memakai definisi chunk dari kode bila tidak ada), tetapi boleh di-commit:
+  `git add Assets/Data/Resources/Untai/Chunks`.
+- **Prefab atau material terhapus:** jalankan **Untai > Build Prefabs and Scene**. Hanya aset yang hilang
+  yang dibuat ulang; prefab yang sudah diedit dan slot PrefabLibrary yang sudah terisi tidak ditimpa.
+- **Objek tampil sebagai primitif polos, bukan prefab:** pilih `GameDirector` di Hierarchy dan pastikan field
+  `Prefabs` berisi `PrefabLibrary` dan `Parameters` berisi `GameplayParameters` (keduanya di
+  `Assets/Data/Resources/Untai`). Jika kosong, game memakai fallback primitif.
+- **Build Settings:** `Untai_Main` otomatis dipasang sebagai scene pertama. Jika belum, jalankan
+  **Untai > Add Main Scene To Build Settings**.
+- **Input:** proyek memakai Input System saja (`Project Settings > Player > Active Input Handling` =
+  Input System Package). Jangan diganti ke Input Manager lama, karena input dibaca lewat Input System.
+- **Ruang disk:** Unity butuh ruang kosong untuk cache dan impor paket. Bila muncul error `ENOSPC` atau
+  `no space left on device`, kosongkan drive tempat proyek dan drive C: (cache Unity).
+- **Mengganti model dummy:** lihat bagian [Prefab dan PrefabLibrary](#prefab-dan-prefablibrary) di bawah.
+  Setelah mengedit prefab, simpan prefab tersebut. Tidak perlu menjalankan ulang menu builder.
+
 ## Prefab dan PrefabLibrary
 
 ```
