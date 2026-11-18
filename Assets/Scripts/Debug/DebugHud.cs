@@ -54,6 +54,7 @@ namespace Untai.DebugTools
             sb.Length = 0;
             sb.Append("<b>UNTAI  Debug HUD</b>  <color=#999>(F1 sembunyikan)</color>\n");
             AppendPerformance(sb);
+            AppendDDA(sb);
             AppendParameters(sb);
             AppendGameplay(sb);
             _content.text = sb.ToString();
@@ -81,6 +82,33 @@ namespace Untai.DebugTools
             }
         }
 
+        void AppendDDA(StringBuilder sb)
+        {
+            sb.Append("\n<b><color=#ff9af0>[2] DDA</color></b>\n");
+            var dda = DDAController.Instance;
+            if (dda == null) { sb.Append("  (DDA belum aktif)\n"); return; }
+            var m = dda.Manager;
+            string stateColor = m.State == DifficultyState.Struggling ? "#80ff80"
+                : m.State == DifficultyState.TooEasy ? "#ff8080" : "#ffffff";
+            sb.Append("  performa ").Append(m.Performance.ToString("0.00"))
+              .Append(" (window ").Append(dda.Scorer.Count).Append(")  ->  <b>skor DDA ")
+              .Append(m.Difficulty.ToString("0.00")).Append("</b>  <color=").Append(stateColor).Append('>')
+              .Append(StateName(m.State)).Append("</color>\n");
+            sb.Append("  ambang: <").Append(m.lowThreshold.ToString("0.00")).Append(" kesulitan, >")
+              .Append(m.highThreshold.ToString("0.00")).Append(" terlalu mudah | evaluasi ")
+              .Append(dda.EvaluationCount).Append('\n');
+        }
+
+        public static string StateName(DifficultyState s)
+        {
+            switch (s)
+            {
+                case DifficultyState.Struggling: return "KESULITAN (turunkan)";
+                case DifficultyState.TooEasy: return "TERLALU MUDAH (naikkan)";
+                default: return "SEIMBANG";
+            }
+        }
+
         void AppendParameters(StringBuilder sb)
         {
             var p = GameplayParameters.Active;
@@ -93,6 +121,7 @@ namespace Untai.DebugTools
             Param(sb, "  agresivitas", p.aggression, o.aggression, "0.00");
             Param(sb, "  checkpoint/", p.checkpointInterval, o.checkpointInterval, "0");
             Param(sb, "  benang", p.threadLength, o.threadLength, "0.0");
+            Param(sb, "jangkar", p.anchorRange, o.anchorRange, "0.0");
             sb.Append('\n');
             Param(sb, "  bobot E", p.easyWeight, o.easyWeight, "0.00");
             Param(sb, " M", p.mediumWeight, o.mediumWeight, "0.00");

@@ -28,6 +28,7 @@ namespace Untai.Core
             player.gameObject.AddComponent<ThreadSwing>();
 
             gameObject.AddComponent<DDA.PerformanceTracker>();
+            var dda = gameObject.AddComponent<DDA.DDAController>();
             var level = gameObject.AddComponent<LevelBuilder>();
             level.player = player;
             level.thread = thread;
@@ -37,6 +38,7 @@ namespace Untai.Core
             gameObject.AddComponent<DebugTools.DebugHud>().thread = thread;
             CameraRig.SideFollowCamera.Attach(player.transform);
 
+            dda.Initialize(); // parameter awal DDA diterapkan sebelum chunk pertama dirakit
             level.BuildLevel(12345, 1);
         }
 
