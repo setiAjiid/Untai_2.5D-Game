@@ -94,9 +94,14 @@ namespace Untai.DebugTools
               .Append(" (window ").Append(dda.Scorer.Count).Append(")  ->  <b>skor DDA ")
               .Append(m.Difficulty.ToString("0.00")).Append("</b>  <color=").Append(stateColor).Append('>')
               .Append(StateName(m.State)).Append("</color>\n");
-            sb.Append("  ambang: <").Append(m.lowThreshold.ToString("0.00")).Append(" kesulitan, >")
-              .Append(m.highThreshold.ToString("0.00")).Append(" terlalu mudah | evaluasi ")
+            sb.Append("  ambang kesulitan ").Append(m.lowThreshold.ToString("0.00")).Append(", terlalu mudah ")
+              .Append(m.highThreshold.ToString("0.00")).Append(" | evaluasi ")
               .Append(dda.EvaluationCount).Append('\n');
+            // Log keputusan terbaru: pemicu -> performa -> kondisi -> skor -> parameter yang berubah.
+            for (int i = 0; i < dda.Log.Count && i < 4; i++)
+            {
+                sb.Append(i == 0 ? "  <color=#ffe08a>" : "  <color=#aaaaaa>").Append(dda.Log[i]).Append("</color>\n");
+            }
         }
 
         public static string StateName(DifficultyState s)
@@ -157,14 +162,45 @@ namespace Untai.DebugTools
             if (!Visible) return;
             if (_style == null)
             {
-                _style = new GUIStyle(GUI.skin.label) { richText = true, fontSize = 13, wordWrap = false };
+                _style = new GUIStyle(GUI.skin.label) { richText = true, fontSize = 12, wordWrap = false };
                 _style.normal.textColor = Color.white;
                 _boxStyle = new GUIStyle(GUI.skin.box);
             }
             var content = _content;
-            float h = _style.CalcHeight(content, 470f) + 12f;
-            GUI.Box(new Rect(8f, 8f, 486f, h), GUIContent.none, _boxStyle);
-            GUI.Label(new Rect(16f, 12f, 470f, h), content, _style);
+            float h = _style.CalcHeight(content, PanelWidth - 16f) + 12f;
+            GUI.Box(new Rect(8f, 8f, PanelWidth, h), GUIContent.none, _boxStyle);
+            GUI.Box(new Rect(8f, 8f, PanelWidth, h), GUIContent.none, _boxStyle); // dua lapis agar lebih gelap
+            GUI.Label(new Rect(16f, 12f, PanelWidth - 16f, h), content, _style);
+            DrawFlowBanner();
+        }
+
+        const float PanelWidth = 600f;
+        static readonly string[] FlowStages = { "PLAYER PERFORMANCE", "DDA", "PARAMETER PCG & AI", "GAMEPLAY BERUBAH" };
+
+        /// <summary>
+        /// Banner alur integrasi di kanan atas. Setelah DDA mengambil keputusan, tiap tahap
+        /// menyala bergantian sehingga alur Performance -> DDA -> Parameter -> Gameplay terlihat jelas.
+        /// </summary>
+        void DrawFlowBanner()
+        {
+            var dda = DDAController.Instance;
+            float since = dda != null ? Time.time - dda.LastDecisionTime : 100f;
+            float w = 150f, gap = 22f;
+            float x = Screen.width - (w * 4f + gap * 3f) - 10f;
+            float y = 10f;
+            Color old = GUI.color;
+            for (int i = 0; i < FlowStages.Length; i++)
+            {
+                bool lit = since >= i * 0.5f && since < 3f;
+                GUI.color = lit ? new Color(1f, 0.85f, 0.3f) : new Color(1f, 1f, 1f, 0.75f);
+                GUI.Box(new Rect(x + i * (w + gap), y, w, 26f), FlowStages[i]);
+                if (i < FlowStages.Length - 1)
+                {
+                    GUI.color = Color.white;
+                    GUI.Label(new Rect(x + i * (w + gap) + w + 4f, y + 3f, gap, 22f), "->");
+                }
+            }
+            GUI.color = old;
         }
     }
 }

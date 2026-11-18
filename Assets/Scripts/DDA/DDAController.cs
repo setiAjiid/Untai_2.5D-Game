@@ -112,8 +112,19 @@ namespace Untai.DDA
             OnDecisionLogged(trigger, decision, _changes.ToString());
         }
 
-        /// <summary>Titik log keputusan (diisi pada commit log HUD).</summary>
-        protected virtual void OnDecisionLogged(string trigger, DDADecision d, string changes) { }
+        /// <summary>Log keputusan DDA terbaru (paling baru di indeks 0) untuk HUD.</summary>
+        public readonly List<string> Log = new List<string>(MaxLog + 1);
+
+        void OnDecisionLogged(string trigger, DDADecision d, string changes)
+        {
+            string arrow = d.after > d.before + 0.0001f ? "naik" : d.after < d.before - 0.0001f ? "turun" : "tetap";
+            string entry = "[" + Time.time.ToString("0") + "s] " + trigger + ": perf " + d.performance.ToString("0.00") +
+                           " " + d.state + " -> skor " + d.before.ToString("0.00") + ">" + d.after.ToString("0.00") +
+                           " (" + arrow + ")" + (changes.Length > 0 ? "\n      " + changes : "");
+            Log.Insert(0, entry);
+            if (Log.Count > MaxLog) Log.RemoveAt(Log.Count - 1);
+            Debug.Log("[Untai DDA] " + entry);
+        }
 
         /// <summary>Kembalikan DDA dan parameter ke kondisi awal.</summary>
         public void ResetDDA()
@@ -124,6 +135,8 @@ namespace Untai.DDA
             _deathChunk = -1;
             _deathCount = 0;
             GameplayParameters.NotifyChanged();
+            Log.Insert(0, "[" + Time.time.ToString("0") + "s] RESET DDA -> skor " + Manager.Difficulty.ToString("0.00"));
+            if (Log.Count > MaxLog) Log.RemoveAt(Log.Count - 1);
         }
     }
 }
