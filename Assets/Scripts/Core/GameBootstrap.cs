@@ -42,6 +42,8 @@ namespace Untai.Core
             var kill = new GameObject("KillZone").AddComponent<KillZone>();
             kill.player = health;
 
+            gameObject.AddComponent<DDA.PerformanceTracker>();
+            gameObject.AddComponent<DebugTools.DebugHud>().thread = thread;
             CameraRig.SideFollowCamera.Attach(player.transform);
         }
 
