@@ -47,34 +47,39 @@ namespace Untai.DDA
 
         public void Clear() => _window.Clear();
 
-        /// <summary>Skor satu sampel: gabungan kematian, damage, waktu, dan sisa sumber daya.</summary>
+        /// <summary>
+        /// Skor satu segmen. Segmen gagal (berakhir dengan kematian) bernilai rendah karena
+        /// komponen kematian dan waktunya nol; segmen selesai dinilai dari damage, waktu, dan sumber daya.
+        /// </summary>
         public static float Score(PerformanceSample s)
         {
-            float death = 1f - Mathf.Clamp01(s.failures / 2f);
+            bool failed = s.failures > 0;
+            float death = failed ? 0f : 1f;
             float dmg = 1f - Mathf.Clamp01(s.damage / 3f);
             float exp = Mathf.Max(1f, s.expectedTime);
-            float time = Mathf.Clamp01((2f * exp - s.time) / exp); // <= waktu wajar: 1, >= 2x: 0
-            float res = s.resourceRatio < 0f ? 0.6f : Mathf.Clamp01(s.resourceRatio * 1.5f);
-            return 0.45f * death + 0.2f * dmg + 0.2f * time + 0.15f * res;
+            float time = failed ? 0f : Mathf.Clamp01((2f * exp - s.time) / exp); // <= waktu wajar: 1, >= 2x: 0
+            float res = s.resourceRatio < 0f ? 0.5f : Mathf.Clamp01(s.resourceRatio * 1.5f);
+            return 0.6f * death + 0.15f * dmg + 0.1f * time + 0.15f * res;
         }
 
-        /// <summary>Rata-rata berbobot (terbaru = bobot 1, sebelumnya dikali recencyDecay).</summary>
-        public float Evaluate(PerformanceSample? inProgress = null)
+        /// <summary>
+        /// Rata-rata berbobot window (terbaru = bobot 1, sebelumnya dikali recencyDecay),
+        /// ditambah prior netral kecil agar sampel pertama tidak terlalu ekstrem.
+        /// </summary>
+        public float Evaluate()
         {
-            float sum = 0f, wsum = 0f, w = 1f;
-            if (inProgress.HasValue)
-            {
-                sum += Score(inProgress.Value) * 1.2f;
-                wsum += 1.2f;
-            }
+            float sum = PriorScore * PriorWeight, wsum = PriorWeight, w = 1f;
             for (int i = _window.Count - 1; i >= 0; i--)
             {
                 sum += Score(_window[i]) * w;
                 wsum += w;
                 w *= recencyDecay;
             }
-            return wsum > 0f ? sum / wsum : 0.6f;
+            return sum / wsum;
         }
+
+        const float PriorScore = 0.6f;
+        const float PriorWeight = 0.5f;
     }
 
     /// <summary>

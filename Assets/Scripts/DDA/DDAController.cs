@@ -30,8 +30,10 @@ namespace Untai.DDA
 
         PerformanceTracker _tracker;
         bool _initialized;
-        int _deathChunk = -1;
-        int _deathCount;
+        int _segChunk = -1;
+        int _segDeaths;
+        int _segDamage;
+        float _segTime;
         readonly StringBuilder _changes = new StringBuilder(256);
 
         void Awake() => Instance = this;
@@ -66,42 +68,80 @@ namespace Untai.DDA
             }
         }
 
-        PerformanceSample ToSample(ChunkRecord r, bool inProgress)
+        float ExpectedTime(int chunkIndex)
         {
-            float expected = 8f;
             var lb = LevelBuilder.Instance;
-            if (lb != null && r.chunkIndex >= 0 && r.chunkIndex < lb.Chunks.Count)
-                expected = lb.Chunks[r.chunkIndex].def.width / (GameplayParameters.Active.moveSpeed * 0.55f) + 1f;
+            if (lb != null && chunkIndex >= 0 && chunkIndex < lb.Chunks.Count)
+                return lb.Chunks[chunkIndex].def.width / (GameplayParameters.Active.moveSpeed * 0.55f) + 1f;
+            return 8f;
+        }
+
+        // Segmen = potongan permainan yang berakhir dengan kematian atau selesainya chunk.
+        // Angka "dasar" segmen dipakai agar kematian tidak dihitung dua kali saat chunk selesai.
+        void SyncSegment(ChunkRecord r)
+        {
+            if (r.chunkIndex != _segChunk || r.deaths < _segDeaths)
+            {
+                _segChunk = r.chunkIndex;
+                _segDeaths = 0;
+                _segDamage = 0;
+                _segTime = 0f;
+            }
+        }
+
+        PerformanceSample SegmentSample(ChunkRecord r, int failures, float resource)
+        {
             return new PerformanceSample
             {
-                failures = r.deaths,
-                damage = r.damage,
-                // Chunk yang masih berjalan tidak dinilai dari kecepatannya.
-                time = inProgress ? Mathf.Max(r.time, expected) : r.time,
-                expectedTime = expected,
-                resourceRatio = r.threadRatioAtCheckpoint
+                failures = failures,
+                damage = Mathf.Max(0, r.damage - _segDamage),
+                time = Mathf.Max(0f, r.time - _segTime),
+                expectedTime = ExpectedTime(r.chunkIndex),
+                resourceRatio = resource
             };
         }
 
         void OnChunkCompleted(ChunkRecord r)
         {
-            Scorer.Add(ToSample(r, false));
-            Decide((r.simulated ? "simulasi " : "") + "chunk #" + r.chunkIndex + " selesai", null);
+            PerformanceSample sample;
+            if (r.simulated)
+            {
+                // Catatan simulasi (tombol demo) dipakai apa adanya.
+                sample = new PerformanceSample
+                {
+                    failures = r.deaths, damage = r.damage, time = r.time,
+                    expectedTime = ExpectedTime(r.chunkIndex), resourceRatio = r.threadRatioAtCheckpoint
+                };
+            }
+            else
+            {
+                SyncSegment(r);
+                sample = SegmentSample(r, 0, r.threadRatioAtCheckpoint);
+                _segChunk = -1;
+                if (r.chunkIndex == 0) return; // chunk awal (aman) tidak dinilai
+            }
+            Scorer.Add(sample);
+            Decide((r.simulated ? "simulasi " : "") + "chunk #" + r.chunkIndex + " selesai");
         }
 
         void OnPerformanceChanged(ChunkRecord r)
         {
-            // Hanya kematian yang memicu evaluasi langsung; damage cukup dinilai saat chunk selesai.
-            if (r.chunkIndex != _deathChunk || r.deaths < _deathCount) { _deathChunk = r.chunkIndex; _deathCount = 0; }
-            if (r.deaths <= _deathCount) return;
-            _deathCount = r.deaths;
-            Decide((r.simulated ? "simulasi mati" : "mati") + " di chunk #" + r.chunkIndex, ToSample(r, true));
+            // Setiap kematian menutup satu segmen gagal dan langsung dievaluasi.
+            // Damage tanpa kematian cukup dinilai saat segmen berikutnya ditutup.
+            SyncSegment(r);
+            if (r.deaths <= _segDeaths) return;
+            var sample = SegmentSample(r, 1, -1f);
+            _segDeaths = r.deaths;
+            _segDamage = r.damage;
+            _segTime = r.time;
+            Scorer.Add(sample);
+            Decide((r.simulated ? "simulasi mati" : "mati") + " di chunk #" + r.chunkIndex);
         }
 
-        void Decide(string trigger, PerformanceSample? inProgress)
+        void Decide(string trigger)
         {
             Initialize();
-            float perf = Scorer.Evaluate(inProgress);
+            float perf = Scorer.Evaluate();
             var decision = Manager.Evaluate(perf);
             _changes.Length = 0;
             Mapper.Apply(decision.after, GameplayParameters.Active, _changes);
@@ -132,8 +172,7 @@ namespace Untai.DDA
             Scorer.Clear();
             Manager.Reset(initialDifficulty);
             Mapper.ApplyImmediate(Manager.Difficulty, GameplayParameters.Active);
-            _deathChunk = -1;
-            _deathCount = 0;
+            _segChunk = -1;
             GameplayParameters.NotifyChanged();
             Log.Insert(0, "[" + Time.time.ToString("0") + "s] RESET DDA -> skor " + Manager.Difficulty.ToString("0.00"));
             if (Log.Count > MaxLog) Log.RemoveAt(Log.Count - 1);
