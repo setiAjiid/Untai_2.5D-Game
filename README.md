@@ -142,7 +142,7 @@ Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukur
 | Tab / Q | Ganti karakter aktif (karakter lain diam menjadi tumpuan) |
 | W/S | Panjat / turuni untai saat menggantung (dari pasangan atau jangkar) |
 | Tahan F | Gulung untai: tarik pasangan mendekat / naik |
-| Tahan Shift / J | Kaitkan untai ke jangkar (bola biru, menyala kuning bila terjangkau) |
+| Shift / J (sekali tekan) | Kait untai ke jangkar (bola biru, menyala kuning bila terjangkau); tekan lagi atau Space untuk melepas; lepas otomatis saat mendarat |
 | R | Respawn keduanya di checkpoint |
 
 ### Cara menyelesaikan rintangan
@@ -151,8 +151,10 @@ Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukur
   turun dari tepi lalu pompa ayunan (A/D) dan lompat dari untai (Space) ke seberang. Ganti karakter (Tab),
   turunkan karakter kedua ke jurang; ia menggantung pada pasangannya, lalu panjat (W) dan lompat naik,
   atau tahan F dari karakter di seberang untuk menariknya.
-- **Tebing lebih tinggi dari lompatan:** dekati jangkar, tahan Shift untuk mengait, panjat (W), ayun, lalu
+- **Tebing lebih tinggi dari lompatan:** dekati jangkar, tekan Shift sekali untuk mengait, panjat (W), ayun, lalu
   Space untuk melompat ke atas tebing. Setelah itu tarik pasangan dengan F atau ganti karakter dan ulangi.
+- **Zona aman pendaratan:** 3 m pertama tiap platform bebas enemy dan duri, jadi setelah menyeberang kamu
+  punya ruang untuk mendarat. Enemy berpatroli di bagian platform setelahnya.
 - **Untai terlalu tegang:** karakter aktif tertahan bila terlalu jauh dari pasangannya; ganti karakter
   atau tarik pasangan untuk maju bersama.
 

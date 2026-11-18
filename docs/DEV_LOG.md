@@ -224,7 +224,7 @@ HUD menampilkan alur ini sebagai panel bernomor [1] Performance, [2] DDA, [3] Pa
 | Tab / Q | Ganti karakter aktif (Tandem) |
 | W/S | Panjat / turuni untai saat menggantung |
 | Tahan F | Tarik pasangan (gulung untai) |
-| Tahan Shift atau J | Kaitkan untai ke jangkar terdekat (bola biru menyala kuning bila terjangkau) |
+| Shift atau J (sekali tekan) | Kait/lepas untai pada jangkar terdekat; lepas otomatis saat mendarat |
 | R | Respawn keduanya di checkpoint terakhir |
 | F1 | Tampilkan/sembunyikan HUD |
 | F2 | Simulasi pemain mati |

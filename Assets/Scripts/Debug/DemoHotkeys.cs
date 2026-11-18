@@ -113,7 +113,7 @@ namespace Untai.DebugTools
             GUI.Box(r, GUIContent.none);
             GUI.Label(new Rect(16f, r.y + 4f, r.width - 16f, 18f), Legend, _style);
             GUI.Label(new Rect(16f, r.y + 21f, r.width - 16f, 18f),
-                "Main: A/D gerak, Space lompat, Tab/Q ganti karakter, tahan Shift/J = kait jangkar, W/S panjat untai, tahan F = tarik pasangan", _style);
+                "Main: A/D gerak, Space lompat, Tab/Q ganti karakter, Shift/J = kait/lepas jangkar, W/S panjat untai, tahan F = tarik pasangan", _style);
         }
     }
 }
