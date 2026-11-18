@@ -23,7 +23,8 @@ namespace Untai.Core
             var root = new GameObject("Sandbox").transform;
             Prims.Box("Ground", new Vector3(10f, -0.5f, 0f), new Vector3(40f, 1f, 3f), new Color(0.35f, 0.4f, 0.45f), root);
             Prims.Box("Step", new Vector3(8f, 0.75f, 0f), new Vector3(3f, 1.5f, 3f), new Color(0.35f, 0.4f, 0.45f), root);
-            PlayerMotor.CreatePlayer(new Vector3(0f, 1.5f, 0f));
+            var player = PlayerMotor.CreatePlayer(new Vector3(0f, 1.5f, 0f));
+            CameraRig.SideFollowCamera.Attach(player.transform);
         }
 
         public static void EnsureLight()
