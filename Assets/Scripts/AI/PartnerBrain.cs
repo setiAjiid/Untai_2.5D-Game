@@ -287,6 +287,9 @@ namespace Untai.AI
                     // selain itu: jalan terus, menggantung pada karakter aktif lalu memanjat
                 }
 
+                // Jebakan duri di depan: lompati.
+                if (TrapAhead(me, dir, 1.4f)) Jump();
+
                 // Karakter aktif lebih tinggi dan dekat: lompat naik.
                 if (leader.y > me.y + 0.8f && Mathf.Abs(leader.x - me.x) < 3f) Jump();
             }
@@ -351,6 +354,16 @@ namespace Untai.AI
         }
 
         protected static bool GroundBelow(Vector3 from, float depth) => StaticRay(from, Vector3.down, depth, out _);
+
+        /// <summary>Ada trigger Trap di depan setinggi kaki (raycast yang ikut mengenai trigger).</summary>
+        protected static bool TrapAhead(Vector3 me, float dir, float dist)
+        {
+            Vector3 origin = me + Vector3.down * 0.7f;
+            int n = Physics.RaycastNonAlloc(origin, new Vector3(dir, 0f, 0f), s_Hits, dist, ~0, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < n; i++)
+                if (s_Hits[i].collider.GetComponent<Level.Trap>() != null) return true;
+            return false;
+        }
 
         /// <summary>Cari pijakan di seberang celah dalam jangkauan lompat.</summary>
         protected static bool FindLanding(Vector3 me, float dir, float reach)
