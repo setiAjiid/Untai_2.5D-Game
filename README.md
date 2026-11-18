@@ -47,3 +47,49 @@ berupa primitif (kapsul dan kubus) sebagai placeholder.
 | Core | `Assets/Scripts/Core` | Event global, input, game loop |
 
 Detail struktur folder: [docs/STRUCTURE.md](docs/STRUCTURE.md).
+
+## Status
+
+Prototipe siap demo (Project EAS). Yang sudah berjalan:
+
+- [x] Gerak samping 2.5D, lompat variabel, coyote time, kamera follow
+- [x] Benang terikat checkpoint (sumber daya), render benang, ayunan jangkar sederhana
+- [x] Checkpoint, kill zone, jebakan, goal, respawn
+- [x] **PCG**: 12 chunk (mudah/sedang/sulit), perakit weighted ber-seed, tolak sambungan, validasi BFS
+- [x] **DDA**: rolling window performa, tiga kondisi, pemetaan parameter dengan clamp dan step limit
+- [x] **Game AI**: FSM enemy (Patrol, Chase, Attack, Return), agresivitas dari DDA
+- [x] HUD debug (alur Performance -> DDA -> Parameter -> Gameplay), tombol demo, game loop antar level
+- [ ] Companion Utility AI, aset visual, audio, efek (belum, opsional)
+
+## Cara Menjalankan
+
+1. Buka proyek dengan **Unity 6000.3.23f1**.
+2. Buka scene `Assets/Scenes/Untai_Main.unity` lalu tekan **Play**.
+   Scene lain (misal `SampleScene`) juga bisa: bootstrap otomatis membuat game saat Play.
+3. Tidak ada langkah manual wajib. Aset chunk dibuat otomatis oleh Editor saat proyek dimuat
+   (atau lewat menu **Untai > Generate Sample Chunks**); tanpa aset pun game memakai definisi bawaan.
+
+## Kontrol
+
+| Tombol | Fungsi |
+|---|---|
+| A/D atau panah | Gerak |
+| Space | Lompat (tahan = lebih tinggi); saat mengayun = lepas dengan dorongan |
+| Tahan Shift / J | Kaitkan benang ke jangkar (bola biru, menyala kuning bila terjangkau) |
+| W/S | Gulung/ulur tali saat mengayun |
+| R | Respawn di checkpoint |
+
+## Tombol Demo
+
+| Tombol | Fungsi |
+|---|---|
+| F1 | Tampilkan/sembunyikan HUD |
+| F2 | Simulasi mati |
+| F3 / F4 | Simulasi performa bagus / buruk |
+| F5 | Seed acak baru |
+| F6 | Ulang level dengan seed sama |
+| F7 | Level berikutnya |
+| F8 | Reset DDA |
+| F9 | Lompat ke chunk berikutnya |
+
+Alur sistem, keputusan desain per fase, dan skenario demo: [docs/DEV_LOG.md](docs/DEV_LOG.md).
