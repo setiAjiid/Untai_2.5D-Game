@@ -38,12 +38,12 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 12
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -119,6 +119,101 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1001 &320426875
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6166555662919676156, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+      propertyPath: m_Name
+      value: Player
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+--- !u!114 &320426876 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5600012519099817570, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+  m_PrefabInstance: {fileID: 320426875}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c285897b1e76203ec92d113b0f551771, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.Player.PlayerHealth
+--- !u!114 &320426877 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 948059910131930502, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+  m_PrefabInstance: {fileID: 320426875}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d06cec5489180ea5e67bc4b416b138a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.Thread.ThreadController
+--- !u!114 &320426878 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2307922920399277843, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+  m_PrefabInstance: {fileID: 320426875}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a1b3380f8b6a0d51110237ed79e0612, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.Player.PlayerMotor
+--- !u!4 &320426879 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2598724850489780929, guid: 0830ece72ba5abd4c824ded968d2f0dd, type: 3}
+  m_PrefabInstance: {fileID: 320426875}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -131,6 +226,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -179,7 +275,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 45
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -205,8 +301,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.043619387, y: 0, z: 0, w: 0.99904823}
+  m_LocalPosition: {x: 2.5, y: 3.7, z: -17}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -248,14 +344,32 @@ MonoBehaviour:
   m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
-  m_Version: 2
   m_TaaSettings:
-    quality: 3
-    frameInfluence: 0.1
-    jitterScale: 1
-    mipBias: 0
-    varianceClampScale: 0.9
-    contrastAdaptiveSharpening: 0
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05d5333c76ac053e678f0d797fd377ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.CameraRig.SideFollowCamera
+  target: {fileID: 320426879}
+  offset: {x: 0, y: 2.5, z: -17}
+  smoothTime: 0.25
+  lookAheadDistance: 3
+  lookAheadSmooth: 0.6
+  pitch: 5
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -282,14 +396,14 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   m_Enabled: 1
-  serializedVersion: 11
+  serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 2
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
-  m_CookieSize: 10
+  m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
     m_Type: 2
     m_Resolution: -1
@@ -336,6 +450,9 @@ Light:
   m_ForceVisible: 0
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
 --- !u!4 &410087041
 Transform:
   m_ObjectHideFlags: 0
@@ -363,17 +480,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Version: 3
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
-  m_LightLayerMask: 1
-  m_RenderingLayers: 1
   m_CustomShadowLayers: 0
-  m_ShadowLayerMask: 1
-  m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 1
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -423,6 +546,78 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1001800122
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046276486241550696, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8918291591206889232, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: m_Name
+      value: KillZone
+      objectReference: {fileID: 0}
+    - target: {fileID: 9049135534177456535, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+      propertyPath: player
+      value: 
+      objectReference: {fileID: 320426876}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+--- !u!114 &1001800123 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9049135534177456535, guid: bf3c9d80aa14feb41a051612a5071524, type: 3}
+  m_PrefabInstance: {fileID: 1001800122}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fec2ea12319d72f83f3a4251784f32a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.Level.KillZone
 --- !u!1 &1500000001
 GameObject:
   m_ObjectHideFlags: 0
@@ -433,8 +628,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1500000002}
   - component: {fileID: 1500000003}
+  - component: {fileID: 1500000009}
+  - component: {fileID: 1500000008}
+  - component: {fileID: 1500000007}
+  - component: {fileID: 1500000006}
+  - component: {fileID: 1500000005}
+  - component: {fileID: 1500000004}
   m_Layer: 0
-  m_Name: Untai Game
+  m_Name: GameDirector
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -468,7 +669,93 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startSeed: 12345
+  parameters: {fileID: 11400000, guid: d1669405e10fd5e56b92c001777e71dd, type: 2}
+  prefabs: {fileID: 11400000, guid: 0614d98caf5d0c64baf8f21f3fe43d0b, type: 2}
+  player: {fileID: 320426878}
+  killZone: {fileID: 1001800123}
   nextLevelDelay: 2.5
+--- !u!114 &1500000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e93a78c3a973746de74809898008637b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.DebugTools.DemoHotkeys
+--- !u!114 &1500000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c94bbbd72d78a8cc8cc3a5ad8639fb69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.DebugTools.DebugHud
+  refreshInterval: 0.2
+  thread: {fileID: 320426877}
+--- !u!114 &1500000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e62eb1212ce5f63fc1757c223114a69c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.AI.EnemySpawner
+  level: {fileID: 0}
+  player: {fileID: 0}
+--- !u!114 &1500000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2179cd0d68702dcdfe6b5073debdd2d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.Level.LevelBuilder
+  chunksPerLevel: 8
+  lookahead: 2
+  killHeight: -6
+  player: {fileID: 320426878}
+  thread: {fileID: 320426877}
+--- !u!114 &1500000008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 267ad17e7b8f8274284ab5f631ba9cc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.DDA.DDAController
+  initialDifficulty: 0.4
+--- !u!114 &1500000009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 293923b5db508cc546e3e3e33970c46d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.DDA.PerformanceTracker
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -477,3 +764,5 @@ SceneRoots:
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 1500000002}
+  - {fileID: 320426875}
+  - {fileID: 1001800122}
