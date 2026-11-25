@@ -80,7 +80,11 @@ namespace Untai.DebugTools
             if (thread != null)
             {
                 sb.Append("  Benang sisa ").Append(thread.Remaining.ToString("0.0"))
-                  .Append(" / ").Append(thread.maxLength.ToString("0.0")).Append('\n');
+                  .Append(" / ").Append(thread.maxLength.ToString("0.0"))
+                  .Append("  | terpakai (jalur) ").Append(thread.Used.ToString("0.0"))
+                  .Append(" / ").Append(thread.maxLength.ToString("0.0"))
+                  .Append("  titik jejak ").Append(thread.TrailCount)
+                  .Append(thread.IsTaut ? "  <color=#ff8080>TEGANG</color>" : "").Append('\n');
             }
         }
 
