@@ -9,6 +9,8 @@ namespace Untai.PCG
     /// pemain bisa melompat (berdasarkan jarak dan tinggi lompat) atau mengayun lewat jangkar
     /// (berdasarkan jangkauan jangkar dan sisa benang). BFS mencari jalur dari platform masuk
     /// (platform terakhir chunk sebelumnya) ke platform terakhir chunk kandidat.
+    /// Pada chunk ayun wajib (swingOnly), lompatan melewati celah dianggap tidak mungkin:
+    /// hanya sambungan bersentuhan yang boleh dilalui tanpa ayunan, dan jalur harus memakai ayunan.
     /// </summary>
     public class ReachabilityValidator
     {
@@ -28,6 +30,7 @@ namespace Untai.PCG
         readonly List<Node> _nodes = new List<Node>(8);
         readonly List<Vector2> _anchors = new List<Vector2>(4);
         readonly int[] _dist = new int[16];
+        readonly bool[] _viaSwing = new bool[16];
         readonly Queue<int> _queue = new Queue<int>(16);
 
         /// <summary>Jangkauan lompat horizontal untuk beda tinggi dh (positif = naik).</summary>
@@ -111,6 +114,8 @@ namespace Untai.PCG
             int n = _nodes.Count;
             for (int i = 0; i < n; i++) _dist[i] = -1;
             _dist[0] = 0;
+            _viaSwing[0] = false;
+            bool requireSwing = c.swingOnly;
             _queue.Clear();
             _queue.Enqueue(0);
             int swingEdges = 0;
@@ -121,10 +126,13 @@ namespace Untai.PCG
                 {
                     if (_dist[v] >= 0 || _nodes[v].left < _nodes[u].left) continue;
                     bool jump = CanJump(_nodes[u], _nodes[v], p);
+                    // Chunk ayun wajib: lompat melintasi celah ditandai tidak mungkin.
+                    if (jump && requireSwing && _nodes[v].left - _nodes[u].right > 0.5f) jump = false;
                     bool swing = !jump && CanSwing(_nodes[u], _nodes[v], _anchors, p);
                     if (!jump && !swing) continue;
                     if (swing) swingEdges++;
                     _dist[v] = _dist[u] + 1;
+                    _viaSwing[v] = _viaSwing[u] || swing;
                     _queue.Enqueue(v);
                 }
             }
@@ -132,7 +140,14 @@ namespace Untai.PCG
             LastNodeCount = n;
             LastPathLength = _dist[n - 1];
             LastSwingEdges = swingEdges;
-            if (_dist[n - 1] >= 0) return null;
+            if (_dist[n - 1] >= 0)
+            {
+                if (requireSwing && !_viaSwing[n - 1]) return "chunk ayun wajib tanpa rute ayun";
+                return null;
+            }
+            if (requireSwing)
+                return "rute ayun tidak terjangkau (jangkar " + p.anchorRange.ToString("0.0") +
+                       ", benang " + RemainingThreadAt(offsetX).ToString("0.0") + ")";
 
             // Cari celah yang gagal untuk alasan yang informatif.
             float worst = 0f;
