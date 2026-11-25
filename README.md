@@ -60,11 +60,13 @@ Prototipe siap demo (Project EAS). Yang sudah berjalan:
 - [x] Gerak samping 2.5D, lompat variabel, coyote time, kamera follow
 - [x] Benang terikat checkpoint (sumber daya), render benang, ayunan jangkar sederhana
 - [x] Checkpoint, kill zone, jebakan, goal, respawn
-- [x] **PCG**: 12 chunk (mudah/sedang/sulit), perakit weighted ber-seed, tolak sambungan, validasi BFS
+- [x] **PCG**: 19 chunk (mudah/sedang/sulit, 4 ayun wajib, 2 benang boros, 1 peti) + tutorial ayun,
+  perakit weighted ber-seed, tolak sambungan, validasi BFS (ayunan wajib dan tinggi peti diperhitungkan)
 - [x] **DDA**: rolling window performa, tiga kondisi, pemetaan parameter dengan clamp dan step limit
 - [x] **Game AI**: FSM enemy (Patrol, Chase, Attack, Return), agresivitas dari DDA
 - [x] HUD debug (alur Performance -> DDA -> Parameter -> Gameplay), tombol demo, game loop antar level
 - [x] Benang berbasis jalur (terurai mengikuti jejak, tergulung saat mundur), pickup gulungan benang
+- [x] Benang sebagai alat wajib: anggaran ketat, chunk ayun wajib, tarik peti untuk pijakan, peringatan benang menipis
 - [x] HUD pemain (nyawa, bar benang, level dan seed) dengan umpan balik damage
 - [x] Title Screen ke Untai_Main (seed acak, seed tetap, atau seed dari kolom input), Esc kembali ke Title
 - [ ] Companion Utility AI, aset visual, audio, efek (belum, opsional)
@@ -114,8 +116,11 @@ Sebagian besar pengaturan sudah otomatis. Yang masih perlu dilakukan sendiri:
 - **Title Screen:** bila tombol tidak membuka `Untai_Main` atau kolom seed belum ada, jalankan
   **Untai > Fix Title Wiring** (mengatur `TitleManager`, `randomStartSeed`, Build Settings, dan membuat
   kolom input seed).
-- **Prefab pickup benang:** jalankan **Untai > Build Prefabs and Scene** sekali agar `ThreadPickup.prefab`
-  dibuat dan dipasang di `PrefabLibrary`. Tanpa prefab, pickup tetap muncul sebagai primitif.
+- **Prefab pickup benang dan peti tarik:** jalankan **Untai > Build Prefabs and Scene** sekali agar
+  `ThreadPickup.prefab` dan `PullCrate.prefab` dibuat dan dipasang di `PrefabLibrary`. Tanpa prefab,
+  keduanya tetap muncul sebagai primitif.
+- **Aset chunk baru:** chunk W1 sampai W4, B1, B2, dan C1 langsung dipakai dari definisi kode. Jalankan
+  **Untai > Generate Sample Chunks** bila ingin membuat atau memperbarui aset `.asset`-nya untuk diedit di Inspector.
 - **Input:** proyek memakai Input System saja (`Project Settings > Player > Active Input Handling` =
   Input System Package). Jangan diganti ke Input Manager lama, karena input dibaca lewat Input System.
 - **Ruang disk:** Unity butuh ruang kosong untuk cache dan impor paket. Bila muncul error `ENOSPC` atau
@@ -127,7 +132,7 @@ Sebagian besar pengaturan sudah otomatis. Yang masih perlu dilakukan sendiri:
 
 ```
 Assets/Prefabs/Characters/  Player.prefab   Enemy.prefab
-Assets/Prefabs/Level/       Platform.prefab Checkpoint.prefab Goal.prefab Trap.prefab KillZone.prefab
+Assets/Prefabs/Level/       Platform.prefab Checkpoint.prefab Goal.prefab Trap.prefab KillZone.prefab PullCrate.prefab
 Assets/Prefabs/Thread/      Anchor.prefab   ThreadPickup.prefab
 Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukuran dasar platform)
 ```
@@ -158,6 +163,32 @@ Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukur
 - PCG memperkirakan panjang jalur sebagai jarak horizontal x `PathFactor` (1,6) sehingga jarak antar
   checkpoint selalu muat dalam benang.
 
+### Peran benang dalam desain level
+
+1. **Rintangan nyata.** Panjang benang default 36 (DDA 40 mudah sampai 32 sulit). Jarak checkpoint rata-rata
+   sekitar 14 unit x `PathFactor` 1,6 = sekitar 22 unit jalur, jadi pemain memakai sekitar 56 sampai 70 persen
+   benang di antara dua checkpoint. Checkpoint tetap mengisi penuh. Di bawah 20 persen bar benang berdenyut
+   merah, benang di dunia menipis dan memerah, dan muncul teks **BENANG TEGANG** saat benang habis.
+2. **Ayunan wajib.** Chunk W1 sampai W4 punya celah minimal 7 unit (lebih lebar dari `JumpDistance` 5,38 x 1,25)
+   dengan jangkar 3,5 unit ke kanan dan 3,5 unit di atas titik pegang di tepi platform, sehingga tali 4,95 unit
+   tetap terjangkau pada jangkauan jangkar tersulit (5,0). Validator menandai lompatan melintasi celah pada chunk
+   ini sebagai tidak mungkin dan hanya menerima jalur yang memakai ayunan. Chunk pertama setelah S0 selalu
+   **T0 (tutorial ayun)** dengan petunjuk di layar yang hilang setelah pemain berhasil menyeberang.
+3. **Benang boros.** Chunk B1 dan B2 punya jalur bawah lewat lembah (turun lalu naik lagi) yang menghabiskan
+   banyak benang, dibanding jalur atas yang pendek lewat ayunan.
+4. **Tarik peti.** Chunk C1 punya tebing 2,7 unit (lebih tinggi dari lompatan 2,47). Pemain berjalan ke kaki
+   tebing, mengait peti di belakangnya (Shift/J), menahan **S** untuk menarik peti, lalu memanjat peti.
+   Validator menambahkan tinggi peti (1,2) ke tinggi lompat efektif hanya pada chunk berpeti.
+5. **Pickup di rute berisiko.** Pickup diletakkan di dekat titik terendah busur ayunan atau di atas celah,
+   bukan di jalur aman.
+
+### Tampilan benang
+
+Benang wol (tebal 0,12) bergradasi dari titik tambat ke pemain dan dihaluskan dengan Catmull-Rom. Titik jejak
+yang dicatat saat pemain di tanah digambar sedikit di atas permukaan. Segmen kendur ke pemain menggantung sesuai
+sisa benang, garis kait ke jangkar atau peti hampir lurus, ada simpul kecil di checkpoint, dan partikel serat
+muncul saat mengait atau melepas.
+
 ## HUD Pemain
 
 `PlayerHud` selalu tampil (F1 hanya menyembunyikan HUD debug): kotak nyawa di kiri bawah, bar sisa benang
@@ -171,6 +202,7 @@ merah, hati yang hilang berkedip, dan karakter berkedip selama kebal. Pesan sing
 | A/D atau panah | Gerak |
 | Space | Lompat (tahan = lebih tinggi); saat mengayun = lepas dengan dorongan |
 | Tahan Shift / J | Kaitkan benang ke jangkar (bola biru, menyala kuning bila terjangkau) |
+| Shift / J dekat peti + tahan S | Kaitkan benang ke peti (menyala kuning), tahan S untuk menariknya; lepas Shift/J untuk melepas |
 | W/S | Gulung/ulur tali saat mengayun |
 | R | Respawn di checkpoint |
 | Esc | Kembali ke Title Screen |

@@ -198,6 +198,36 @@ dan prefab tidak menemukan Missing Script. Perubahan `InputSystem_Actions` dan R
 hanya pembaruan format, sedangkan input dibaca langsung dari perangkat oleh `InputReader`, sehingga kontrol
 tidak terpengaruh.
 
+## Fase 10: Benang sebagai alat wajib (branch feat/thread-purpose)
+
+Masalah: benang terasa tidak berguna karena panjang 42 hampir tidak pernah habis, ayunan hanya alternatif
+(validator menerima rute lompat atau ayun, dan hanya 4 dari 12 chunk punya jangkar), serta benang tidak
+berinteraksi dengan objek lain.
+
+### Prioritas 1: benang menjadi rintangan
+- Panjang benang default diturunkan ke 36 dan rentang DDA ke 40..32. Dengan jarak checkpoint rata-rata sekitar
+  14 unit dan `PathFactor` 1,6, perkiraan pemakaian 56 sampai 70 persen. Aturan lebar chunk validator menjadi
+  (lebar + 1) x `PathFactor` <= panjang benang agar chunk terlebar (18,5) tetap valid pada benang 32.
+- Empat chunk ayun wajib (W1 sampai W4) dan dua chunk benang boros (B1, B2). Geometri diperiksa dengan simulasi
+  validator pada tingkat mudah dan sulit: rute lompat saja mustahil pada chunk W, sedangkan rute ayun lolos.
+  Chunk ayun wajib dikecualikan dari batas celah maksimum DDA karena celahnya diseberangi lewat jangkar.
+- `ChunkLibrary` kini menggabungkan aset dengan definisi bawaan, sehingga chunk baru terpakai tanpa
+  menjalankan generator.
+- T0 (tutorial ayun) selalu menjadi chunk kedua, tanpa jebakan, enemy, atau pickup.
+- Peringatan benang menipis di HUD dan di dunia; pickup dipindah ke rute berisiko.
+
+### Prioritas 2: peti tarik
+`PullCrate` sengaja dibuat **kinematik**, bukan Rigidbody dinamis. Peti digerakkan halus lewat kode: BoxCast ke
+arah tarikan agar berhenti sebelum dinding atau pemain, dan BoxCast ke bawah sebagai gravitasi manual. Pilihan ini
+menjamin peti tidak menembus platform, tidak terbang, tidak bisa didorong, dan stabil sebagai pijakan. `ThreadPull`
+mengait peti dengan Shift/J bila tidak ada jangkar yang bisa dikait; menahan S menarik peti dengan kecepatan
+yang mengecil seiring sisa benang. Peti yang jatuh ke jurang kembali ke posisi awal. Chunk C1 Crate Step memakai
+tebing 2,7 unit, dan validator menambahkan tinggi peti hanya pada chunk berpeti.
+
+### Prioritas 3: tampilan benang
+Benang wol tebal 0,12 dengan gradasi, dihaluskan Catmull-Rom, menempel di atas permukaan saat di tanah, menggantung
+sesuai sisa benang, diberi simpul di titik tambat, dan partikel saat mengait atau melepas.
+
 ## Alur Sistem
 
 ```
@@ -229,6 +259,7 @@ HUD menampilkan alur ini sebagai panel bernomor [1] Performance, [2] DDA, [3] Pa
 | A/D atau panah | Gerak |
 | Space | Lompat (tahan untuk lompat lebih tinggi); saat mengayun: lepas dengan dorongan |
 | Tahan Shift atau J | Kaitkan benang ke jangkar terdekat (bola biru menyala kuning bila terjangkau) |
+| Shift atau J dekat peti, tahan S | Kaitkan dan tarik peti; lepas Shift/J untuk melepas |
 | W/S | Gulung/ulur tali saat mengayun |
 | R | Respawn di checkpoint terakhir |
 | F1 | Tampilkan/sembunyikan HUD |
