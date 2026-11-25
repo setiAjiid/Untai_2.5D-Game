@@ -52,6 +52,8 @@ namespace Untai.Level
         public string Sequence { get; private set; } = "";
         public string LastNote { get; private set; } = "";
         public ChunkAssembler Assembler => _assembler;
+        /// <summary>Chunk tutorial ayun (indeks 1) pada level ini.</summary>
+        public BuiltChunk TutorialChunk { get; private set; }
         /// <summary>Parent semua objek level hasil PCG ("GeneratedLevel").</summary>
         public Transform Root => _root;
 
@@ -103,6 +105,9 @@ namespace Untai.Level
             _firstCheckpoint = null;
 
             Place(ChunkLibrary.CreateStart(), new ChunkAssembler.PickResult { attempts = 1, note = "awal" }, true);
+            // Chunk pertama setelah S0 selalu tutorial ayun sederhana (tetap, tidak memakai seed).
+            TutorialChunk = Place(ChunkLibrary.CreateTutorial(),
+                new ChunkAssembler.PickResult { attempts = 1, note = "tutorial ayun" }, false);
             PlayerChunkIndex = 0;
             EnsureAhead(0);
 
@@ -179,7 +184,7 @@ namespace Untai.Level
         {
             var p = GameplayParameters.Active;
             int index = Chunks.Count;
-            bool special = def.id == "S0" || def.id == "G0";
+            bool special = def.id == "S0" || def.id == "G0" || def.id == "T0";
 
             // Checkpoint: wajib bila interval tercapai atau benang tidak cukup sampai akhir chunk ini.
             bool needCheckpoint = forceCheckpoint || WouldPlaceCheckpoint(def, p);

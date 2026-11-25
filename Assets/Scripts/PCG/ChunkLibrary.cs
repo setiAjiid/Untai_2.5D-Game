@@ -96,6 +96,16 @@ namespace Untai.PCG
             return New().Setup("S0", "Start", ChunkTier.Easy, 10f, new[] { P(0, 0, 10) });
         }
 
+        /// <summary>
+        /// Chunk tutorial ayun: selalu tepat setelah S0. Satu celah 7 unit dengan satu jangkar
+        /// (geometri sama dengan W1) tanpa jebakan, enemy, atau pickup.
+        /// </summary>
+        public static ChunkDefinition CreateTutorial()
+        {
+            return New().Setup("T0", "Swing Tutorial", ChunkTier.Easy, 16f,
+                new[] { P(0, 0, 4), P(11, 0, 5) }, new[] { V(7.5f, 4.5f) }).MarkSwingOnly();
+        }
+
         /// <summary>Chunk akhir berisi goal, setinggi sambungan chunk sebelumnya.</summary>
         public static ChunkDefinition CreateGoal(float height)
         {
