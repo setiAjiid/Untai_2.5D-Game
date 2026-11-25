@@ -87,6 +87,7 @@ namespace Untai.Player
             if (go.GetComponent<Thread.ThreadRenderer>() == null) go.AddComponent<Thread.ThreadRenderer>();
             if (go.GetComponent<PlayerHealth>() == null) go.AddComponent<PlayerHealth>();
             if (go.GetComponent<Thread.ThreadSwing>() == null) go.AddComponent<Thread.ThreadSwing>();
+            if (go.GetComponent<Thread.ThreadPull>() == null) go.AddComponent<Thread.ThreadPull>();
         }
 
         void Update()

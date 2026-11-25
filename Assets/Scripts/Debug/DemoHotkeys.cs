@@ -114,7 +114,7 @@ namespace Untai.DebugTools
             GUI.Box(r, GUIContent.none);
             GUI.Label(new Rect(16f, r.y + 4f, r.width - 16f, 18f), Legend, _style);
             GUI.Label(new Rect(16f, r.y + 21f, r.width - 16f, 18f),
-                "Main: A/D gerak, Space lompat, tahan Shift/J dekat jangkar (bola biru) untuk mengayun, W/S gulung/ulur, Space lepas", _style);
+                "Main: A/D gerak, Space lompat, tahan Shift/J dekat jangkar (bola biru) untuk mengayun, W/S gulung/ulur, Space lepas; Shift/J dekat peti + tahan S = tarik peti", _style);
         }
     }
 }
