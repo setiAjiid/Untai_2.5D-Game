@@ -22,6 +22,7 @@ namespace Untai.Core
     public class GameDirector : MonoBehaviour
     {
         public int startSeed = 12345;
+        public bool randomStartSeed = false;
 
         [Header("Aset (isi di Inspector; kosong = dimuat dari Resources/Untai)")]
         public GameplayParameters parameters;
@@ -84,7 +85,9 @@ namespace Untai.Core
 
             // Parameter awal DDA diterapkan sebelum chunk pertama dirakit.
             Dda.Initialize();
-            BuildLevel(startSeed, 1);
+
+            int seed = randomStartSeed ? _seedRng.Next(1000, 99999) : startSeed;
+            BuildLevel(seed, 1);
         }
 
         /// <summary>Bangun level dari seed; riwayat performa dan DDA tetap berlanjut antar level.</summary>

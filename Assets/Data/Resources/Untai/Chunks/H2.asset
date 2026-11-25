@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0ce1994e6c2c0d90fc901d110c0cae5, type: 3}
+  m_Name: H2
+  m_EditorClassIdentifier: Assembly-CSharp::Untai.PCG.ChunkDefinition
+  id: H2
+  displayName: Double Swing
+  tier: 2
+  width: 18
+  entryHeight: 0
+  exitHeight: 0
+  platforms:
+  - x: 0
+    top: 0
+    width: 3
+  - x: 8.5
+    top: 1.5
+    width: 1.5
+  - x: 15
+    top: 0
+    width: 3
+  anchors:
+  - {x: 5.75, y: 6}
+  - {x: 13, y: 6}
+  traps: []
+  enemySpawns: []
