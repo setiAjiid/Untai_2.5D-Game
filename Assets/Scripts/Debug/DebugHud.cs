@@ -155,9 +155,28 @@ namespace Untai.DebugTools
                     default: ret++; break;
                 }
             }
-            sb.Append("  aktif ").Append(all.Count)
+            sb.Append("  jumlah enemy ").Append(all.Count)
               .Append("  | Patrol ").Append(patrol).Append("  Chase ").Append(chase)
               .Append("  Attack ").Append(attack).Append("  Return ").Append(ret).Append('\n');
+
+            // Enemy terdekat dari pemain (jarak penuh 2D) beserta state-nya.
+            Vector3 player = thread != null ? thread.transform.position : Vector3.zero;
+            EnemyBrain nearest = null;
+            float nearestSqr = float.MaxValue;
+            for (int i = 0; i < all.Count; i++)
+            {
+                Vector3 d = all[i].transform.position - player;
+                d.z = 0f;
+                if (d.sqrMagnitude < nearestSqr) { nearestSqr = d.sqrMagnitude; nearest = all[i]; }
+            }
+            if (nearest != null)
+            {
+                sb.Append("  terdekat: <b>E").Append(nearest.Id).Append(" <color=#")
+                  .Append(ColorUtility.ToHtmlStringRGB(EnemyBrain.StateColor(nearest.State))).Append('>')
+                  .Append(EnemyBrain.StateLabel(nearest.State)).Append("</color></b>  jarak ")
+                  .Append(Mathf.Sqrt(nearestSqr).ToString("0.0")).Append('\n');
+            }
+            else sb.Append("  terdekat: (tidak ada enemy aktif)\n");
             if (all.Count > 0)
             {
                 var e0 = all[0];
