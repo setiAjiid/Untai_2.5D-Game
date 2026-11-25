@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Untai.PCG
 {
     /// <summary>
-    /// Pustaka chunk. Runtime memuat aset dari Resources/Untai/Chunks; jika belum ada,
-    /// memakai definisi bawaan dari kode (sama persis dengan yang dibuat generator Editor).
+    /// Pustaka chunk. Runtime memuat aset dari Resources/Untai/Chunks, lalu menambahkan definisi
+    /// bawaan dari kode yang id-nya belum punya aset (misal chunk baru sebelum generator dijalankan).
     /// Daftar selalu diurutkan berdasarkan id agar hasil acak ber-seed deterministik.
     /// </summary>
     public static class ChunkLibrary
@@ -15,7 +15,13 @@ namespace Untai.PCG
         public static List<ChunkDefinition> Load()
         {
             var list = new List<ChunkDefinition>(Resources.LoadAll<ChunkDefinition>(ResourceFolder));
-            if (list.Count == 0) list = CreateDefaults();
+            var defaults = CreateDefaults();
+            for (int i = 0; i < defaults.Count; i++)
+            {
+                bool exists = false;
+                for (int j = 0; j < list.Count && !exists; j++) exists = list[j].id == defaults[i].id;
+                if (!exists) list.Add(defaults[i]);
+            }
             list.Sort((a, b) => string.CompareOrdinal(a.id, b.id));
             return list;
         }
@@ -24,7 +30,11 @@ namespace Untai.PCG
         static PlatformSpec P(float x, float top, float w) => new PlatformSpec(x, top, w);
         static Vector2 V(float x, float y) => new Vector2(x, y);
 
-        /// <summary>12 chunk contoh: 4 mudah, 4 sedang, 4 sulit.</summary>
+        // Dimensi chunk ayun wajib (lihat GameplayParameters): JumpDistance 5.38, jadi celah >= 7
+        // (> 5.38 x 1.25 = 6.73). Jangkar diletakkan 3.5 ke kanan dan 3.5 di atas titik pegang di
+        // tepi platform sehingga tali 4.95 masih terjangkau pada jangkauan jangkar tersulit (5.0).
+
+        /// <summary>18 chunk: 4 mudah, 4 sedang, 4 sulit, 4 ayun wajib, 2 benang boros.</summary>
         public static List<ChunkDefinition> CreateDefaults()
         {
             return new List<ChunkDefinition>
@@ -58,6 +68,25 @@ namespace Untai.PCG
                     new[] { P(0, 0, 16) }, null, new[] { V(3.5f, 0), V(6.5f, 0), V(9.5f, 0), V(12.5f, 0) }, new[] { 0, 0, 0 }),
                 New().Setup("H4", "Tower Climb", ChunkTier.Hard, 14f,
                     new[] { P(0, 0, 3), P(5, 1.5f, 2), P(9.5f, 3f, 4.5f) }, null, new[] { V(12, 3f) }, new[] { 2 }),
+
+                // ---------- Ayun wajib (celah >= 7, tidak bisa dilompati) ----------
+                New().Setup("W1", "Swing Gap", ChunkTier.Medium, 16f,
+                    new[] { P(0, 0, 4), P(11, 0, 5) }, new[] { V(7.5f, 4.5f) }, null, new[] { 1 }).MarkSwingOnly(),
+                New().Setup("W2", "Swing Up", ChunkTier.Medium, 16f,
+                    new[] { P(0, 0, 4), P(11.5f, 1.5f, 4.5f) }, new[] { V(7.5f, 4.5f) }).MarkSwingOnly(),
+                New().Setup("W3", "Swing Chain", ChunkTier.Hard, 18.5f,
+                    new[] { P(0, 0, 1.5f), P(8.5f, 0.5f, 1.5f), P(17, 0, 1.5f) },
+                    new[] { V(5f, 4.5f), V(13.5f, 5f) }).MarkSwingOnly(),
+                New().Setup("W4", "High Swing", ChunkTier.Hard, 16f,
+                    new[] { P(0, 1.5f, 4), P(11, 1.5f, 5) }, new[] { V(7.5f, 6f) }, null, new[] { 1 }).MarkSwingOnly(),
+
+                // ---------- Benang boros: jalur bawah panjang vs jalur atas pendek lewat ayunan ----------
+                New().Setup("B1", "Valley Detour", ChunkTier.Medium, 16f,
+                    new[] { P(0, 0, 3), P(4, -1.5f, 2), P(7, -3f, 3), P(11, -1.5f, 2), P(14, 0, 2) },
+                    new[] { V(8.5f, 4.5f) }, new[] { V(8.5f, -3f) }, new[] { 2 }),
+                New().Setup("B2", "Low Road", ChunkTier.Hard, 18f,
+                    new[] { P(0, 1.5f, 3), P(4, 0, 2), P(7, -1.5f, 4), P(12, 0, 2), P(15, 1.5f, 3) },
+                    new[] { V(9f, 6f) }, new[] { V(9f, -1.5f) }, new[] { 2 }),
             };
         }
 

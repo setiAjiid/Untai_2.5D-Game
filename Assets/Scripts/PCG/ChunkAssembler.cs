@@ -53,10 +53,13 @@ namespace Untai.PCG
             return d <= maxStepUp + 0.01f && d >= -maxStepDown - 0.01f;
         }
 
-        /// <summary>Bobot chunk = bobot tingkat dari parameter; 0 jika celahnya melebihi batas parameter.</summary>
+        /// <summary>
+        /// Bobot chunk = bobot tingkat dari parameter; 0 jika celahnya melebihi batas parameter.
+        /// Chunk ayun wajib dikecualikan dari batas celah karena celahnya diseberangi lewat jangkar.
+        /// </summary>
         public float Weight(ChunkDefinition c, ChunkDefinition prev, GameplayParameters p)
         {
-            if (c.MaxGap > p.maxGapWidth + 0.01f) return 0f;
+            if (!c.swingOnly && c.MaxGap > p.maxGapWidth + 0.01f) return 0f;
             float w = Mathf.Max(0f, p.TierWeight((int)c.tier));
             if (c == prev) w *= 0.25f; // kurangi pengulangan chunk yang sama berturut-turut
             return w;

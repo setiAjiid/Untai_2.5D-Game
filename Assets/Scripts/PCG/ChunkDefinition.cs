@@ -49,6 +49,8 @@ namespace Untai.PCG
         [Tooltip("Posisi kandidat jebakan (x lokal, y = permukaan platform). Muncul sesuai trapDensity.")]
         public List<Vector2> traps = new List<Vector2>();
         public List<EnemySpawnSpec> enemySpawns = new List<EnemySpawnSpec>();
+        [Tooltip("Chunk ayun wajib: celah lebih lebar dari lompatan, hanya bisa diseberangi dengan ayunan.")]
+        public bool swingOnly;
 
         /// <summary>Lebar celah terbesar antar platform berurutan.</summary>
         public float MaxGap
@@ -77,10 +79,18 @@ namespace Untai.PCG
             anchors = anchorPoints != null ? new List<Vector2>(anchorPoints) : new List<Vector2>();
             traps = trapPoints != null ? new List<Vector2>(trapPoints) : new List<Vector2>();
             enemySpawns = new List<EnemySpawnSpec>();
+            swingOnly = false;
             if (enemyPlatforms != null)
                 foreach (int p in enemyPlatforms) enemySpawns.Add(new EnemySpawnSpec(p));
             entryHeight = plats[0].top;
             exitHeight = plats[plats.Length - 1].top;
+            return this;
+        }
+
+        /// <summary>Tandai sebagai chunk ayun wajib (dipakai pustaka bawaan).</summary>
+        public ChunkDefinition MarkSwingOnly()
+        {
+            swingOnly = true;
             return this;
         }
     }
