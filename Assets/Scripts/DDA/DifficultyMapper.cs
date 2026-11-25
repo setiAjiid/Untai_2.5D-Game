@@ -28,7 +28,9 @@ namespace Untai.DDA
         public Range enemy = new Range(1f, 3f, 1f);
         public Range aggression = new Range(0.1f, 1f, 0.25f);
         public Range checkpoint = new Range(1f, 3f, 1f);
-        public Range thread = new Range(52f, 38f, 4f);       // makin sulit, benang makin pendek (satuan jalur)
+        // Benang (satuan jalur): jarak checkpoint rata-rata ~14 unit x PathFactor 1.6 = ~22 unit,
+        // sehingga perkiraan pemakaian ~56% (mudah, 40) sampai ~70% (sulit, 32) di antara dua checkpoint.
+        public Range thread = new Range(40f, 32f, 3f);
         public Range anchor = new Range(7.5f, 5.0f, 0.6f);   // makin sulit, jangkauan jangkar makin pendek
         public Range easyWeight = new Range(1f, 0.1f, 0.3f);
         public Range mediumWeight = new Range(0.4f, 0.8f, 0.2f);

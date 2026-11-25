@@ -17,7 +17,7 @@ namespace Untai.Thread
         /// <summary>Kapasitas buffer jejak (dialokasikan sekali).</summary>
         public const int TrailCapacity = 1024;
 
-        public float maxLength = 32f;
+        public float maxLength = 36f;
         [Tooltip("Jarak minimum dari titik jejak terakhir sebelum titik baru dicatat.")]
         public float pointSpacing = 0.25f;
         [Tooltip("Pemain dianggap kembali ke titik jejak lama bila sedekat ini (gulung balik).")]

@@ -19,8 +19,9 @@ namespace Untai.Data
         public float gravityMultiplier = 2.5f;
 
         [Header("Benang")]
-        [Tooltip("Panjang benang dari checkpoint (satuan dunia, diukur sepanjang jalur pemain).")]
-        public float threadLength = 42f;
+        [Tooltip("Panjang benang dari checkpoint (satuan dunia, diukur sepanjang jalur pemain). " +
+                 "Satu chunk rata-rata ~14 unit x PathFactor 1.6 = ~22 unit jalur, jadi 36 berarti ~60% terpakai.")]
+        public float threadLength = 36f;
         [Tooltip("Jangkauan maksimum untuk mengait jangkar.")]
         public float anchorRange = 7f;
         [Tooltip("Tambahan panjang benang maksimum dari satu pickup gulungan.")]

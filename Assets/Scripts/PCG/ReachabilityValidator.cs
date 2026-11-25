@@ -93,7 +93,8 @@ namespace Untai.PCG
             _budgetX = offsetX;
             _budget = threadBudget;
             // Benang (satuan jalur) harus cukup untuk melintasi chunk dari checkpoint di awal chunk.
-            if ((c.width + 2f) * GameplayParameters.PathFactor > p.threadLength * 0.9f) return "lebih panjang dari benang";
+            // PathFactor sudah memberi margin, jadi cukup lebar chunk + 1 unit (chunk 18 unit muat di benang 32).
+            if ((c.width + 1f) * GameplayParameters.PathFactor > p.threadLength) return "lebih panjang dari benang";
 
             _nodes.Clear();
             _nodes.Add(entry);

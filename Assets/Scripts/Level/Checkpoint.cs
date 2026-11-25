@@ -11,7 +11,7 @@ namespace Untai.Level
     /// </summary>
     public class Checkpoint : MonoBehaviour
     {
-        public float threadLength = 42f;
+        public float threadLength = 36f;
         [Tooltip("Tinggi titik tambat benang di atas dasar checkpoint.")]
         public float tetherHeight = 1f;
         [Tooltip("Renderer gulungan yang berganti warna saat aktif.")]
