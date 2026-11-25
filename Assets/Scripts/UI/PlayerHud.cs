@@ -9,6 +9,8 @@ namespace Untai.UI
     /// <summary>
     /// HUD pemain (terpisah dari HUD debug, selalu tampil walau F1 menyembunyikan HUD debug):
     /// nyawa sebagai kotak hati, bar sisa benang, serta nomor level dan seed di pojok.
+    /// Umpan balik: layar berkedip merah dan hati yang hilang berkedip saat terkena damage
+    /// (GameEvents.PlayerDamaged), serta pesan singkat saat respawn (GameEvents.PlayerDied).
     /// Teks angka hanya dibangun ulang saat nilainya berubah agar tidak alokasi per frame.
     /// </summary>
     public class PlayerHud : MonoBehaviour
@@ -24,6 +26,12 @@ namespace Untai.UI
         [Tooltip("Sisa benang (rasio) di bawah nilai ini membuat bar memerah.")]
         public float lowThreadRatio = 0.25f;
 
+        [Header("Umpan balik damage")]
+        public float flashDuration = 0.3f;
+        [Range(0f, 1f)] public float flashAlpha = 0.35f;
+        public float lostHeartBlinkTime = 0.9f;
+        public float respawnMessageTime = 1.6f;
+
         static readonly Color HeartFull = new Color(0.95f, 0.25f, 0.35f);
         static readonly Color HeartEmpty = new Color(0.2f, 0.2f, 0.22f, 0.85f);
         static readonly Color Outline = new Color(0f, 0f, 0f, 0.6f);
@@ -37,6 +45,41 @@ namespace Untai.UI
         int _levelKey = int.MinValue;
         GUIStyle _small;
         GUIStyle _label;
+        GUIStyle _message;
+        static readonly GUIContent RespawnText = new GUIContent("Kembali ke checkpoint");
+
+        float _flashStart = -100f;
+        float _lostUntil = -100f;
+        int _lostFrom, _lostTo; // indeks hati yang baru hilang [from, to)
+        float _respawnUntil = -100f;
+
+        void OnEnable()
+        {
+            GameEvents.PlayerDamaged += OnDamaged;
+            GameEvents.PlayerDied += OnDied;
+        }
+
+        void OnDisable()
+        {
+            GameEvents.PlayerDamaged -= OnDamaged;
+            GameEvents.PlayerDied -= OnDied;
+        }
+
+        // Event dipicu setelah Health dikurangi, jadi hati yang hilang = [Health, Health + amount).
+        void OnDamaged(int amount)
+        {
+            _flashStart = Time.time;
+            if (health == null) return;
+            _lostFrom = Mathf.Max(0, health.Health);
+            _lostTo = Mathf.Min(health.maxHealth, _lostFrom + amount);
+            _lostUntil = Time.time + lostHeartBlinkTime;
+        }
+
+        void OnDied(DeathCause cause)
+        {
+            _flashStart = Time.time;
+            _respawnUntil = Time.time + respawnMessageTime;
+        }
 
         void Start()
         {
@@ -54,11 +97,13 @@ namespace Untai.UI
             EnsureStyles();
             Color old = GUI.color;
 
+            DrawDamageFlash();
             float left = 16f;
             float top = Screen.height - 120f; // di atas legenda tombol demo
             DrawHearts(left, top);
             if (thread != null) DrawThreadBar(left, top + heartSize + 10f);
             DrawLevelInfo();
+            DrawRespawnMessage();
 
             GUI.color = old;
         }
@@ -70,6 +115,26 @@ namespace Untai.UI
             _label.normal.textColor = Color.white;
             _small = new GUIStyle(GUI.skin.label) { fontSize = 11, alignment = TextAnchor.LowerRight };
             _small.normal.textColor = new Color(1f, 1f, 1f, 0.75f);
+            _message = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter
+            };
+            _message.normal.textColor = new Color(1f, 0.85f, 0.85f);
+        }
+
+        /// <summary>Lapisan merah layar penuh yang memudar singkat setelah terkena damage.</summary>
+        void DrawDamageFlash()
+        {
+            float t = (Time.time - _flashStart) / flashDuration;
+            if (t < 0f || t >= 1f) return;
+            Fill(new Rect(0f, 0f, Screen.width, Screen.height), new Color(1f, 0f, 0f, flashAlpha * (1f - t)));
+        }
+
+        void DrawRespawnMessage()
+        {
+            if (Time.time >= _respawnUntil) return;
+            GUI.color = Color.white;
+            GUI.Label(new Rect(0f, Screen.height * 0.38f, Screen.width, 40f), RespawnText, _message);
         }
 
         /// <summary>Nyawa: satu kotak per maxHealth, terisi sesuai Health.</summary>
@@ -77,11 +142,16 @@ namespace Untai.UI
         {
             int max = health.maxHealth;
             int hp = health.Health;
+            bool blinking = Time.time < _lostUntil;
+            bool blinkOn = Mathf.Repeat(Time.time * 8f, 1f) < 0.5f;
             for (int i = 0; i < max; i++)
             {
                 var r = new Rect(x + i * (heartSize + heartGap), y, heartSize, heartSize);
                 Fill(new Rect(r.x - 2f, r.y - 2f, r.width + 4f, r.height + 4f), Outline);
-                Fill(r, i < hp ? HeartFull : HeartEmpty);
+                Color c = i < hp ? HeartFull : HeartEmpty;
+                // Hati yang baru hilang berkedip putih sesaat.
+                if (blinking && i >= hp && i >= _lostFrom && i < _lostTo && blinkOn) c = Color.white;
+                Fill(r, c);
             }
         }
 
