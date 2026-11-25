@@ -16,7 +16,7 @@ namespace Untai.DebugTools
     {
         public const string Legend =
             "F1 HUD  F2 sim. mati  F3 sim. bagus  F4 sim. buruk  F5 seed baru  F6 ulang seed  " +
-            "F7 level berikut  F8 reset DDA  F9 chunk berikut  R respawn";
+            "F7 level berikut  F8 reset DDA  F9 chunk berikut  R respawn  Esc ke Title";
 
         GameDirector _director;
         GUIStyle _style;

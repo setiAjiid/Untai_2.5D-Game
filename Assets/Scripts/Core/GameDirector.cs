@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using Untai.Data;
 using Untai.AI;
 using Untai.DDA;
@@ -114,11 +116,20 @@ namespace Untai.Core
         // ---------------- Game loop ----------------
 
         public float nextLevelDelay = 2.5f;
+        [Tooltip("Scene Title Screen yang dibuka saat menekan Esc.")]
+        public string titleSceneName = "TitleScreen";
         bool _levelComplete;
         string _message = "";
         float _messageUntil;
         GUIStyle _messageStyle;
         readonly System.Random _seedRng = new System.Random();
+
+        void Update()
+        {
+            // Esc: kembali ke Title Screen (bila scene-nya ada di Build Settings).
+            if (InputReader.KeyDown(Key.Escape) && Application.CanStreamedLevelBeLoaded(titleSceneName))
+                SceneManager.LoadScene(titleSceneName);
+        }
 
         void OnEnable() => GameEvents.GoalReached += OnGoalReached;
         void OnDisable() => GameEvents.GoalReached -= OnGoalReached;
