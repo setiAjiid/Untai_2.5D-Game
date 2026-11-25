@@ -90,14 +90,51 @@ namespace Untai.Level
             // Pickup benang: 0 atau 1 per chunk. Diundi paling akhir agar urutan acak jebakan/enemy
             // tidak berubah (seed yang sama tetap menghasilkan level yang sama).
             pickupPlaced = false;
-            if (pickupChance > 0f && Random.value < pickupChance)
+            if (pickupChance > 0f && Random.value < pickupChance && TryRiskySpot(def, out Vector2 spot))
             {
-                var plat = def.platforms[Random.Range(0, def.platforms.Count)];
-                float px = offsetX + Mathf.Lerp(plat.x + 0.5f, plat.Right - 0.5f, Random.Range(0.3f, 0.7f));
-                ThreadPickup.Create(new Vector3(px, plat.top + 1.4f, 0f), root);
+                ThreadPickup.Create(new Vector3(offsetX + spot.x, spot.y, 0f), root);
                 pickupPlaced = true;
             }
             return root;
+        }
+
+        /// <summary>
+        /// Titik pickup di rute berisiko (koordinat lokal chunk), bukan di jalur aman:
+        /// - Chunk berjangkar: dekat titik terendah busur ayunan di bawah jangkar.
+        /// - Chunk bercelah: di atas celah terlebar, setinggi puncak lompatan.
+        /// Chunk tanpa jangkar dan celah tidak mendapat pickup.
+        /// </summary>
+        static bool TryRiskySpot(ChunkDefinition def, out Vector2 spot)
+        {
+            spot = Vector2.zero;
+            if (def.anchors.Count > 0)
+            {
+                Vector2 a = def.anchors[Random.Range(0, def.anchors.Count)];
+                // Perkirakan panjang tali dari tepi platform terdekat di kiri jangkar.
+                float rope = 4.5f;
+                for (int i = def.platforms.Count - 1; i >= 0; i--)
+                {
+                    var pl = def.platforms[i];
+                    if (pl.Right > a.x + 0.5f) continue;
+                    rope = Vector2.Distance(a, new Vector2(pl.Right, pl.top + 1f));
+                    break;
+                }
+                spot = new Vector2(a.x, a.y - rope + 0.3f);
+                return true;
+            }
+
+            int best = -1;
+            float bestGap = 0.9f; // celah sangat kecil masih termasuk jalur aman
+            for (int i = 1; i < def.platforms.Count; i++)
+            {
+                float gap = def.platforms[i].x - def.platforms[i - 1].Right;
+                if (gap > bestGap) { bestGap = gap; best = i; }
+            }
+            if (best < 0) return false;
+            var left = def.platforms[best - 1];
+            var right = def.platforms[best];
+            spot = new Vector2((left.Right + right.x) * 0.5f, Mathf.Max(left.top, right.top) + 3f);
+            return true;
         }
     }
 }
