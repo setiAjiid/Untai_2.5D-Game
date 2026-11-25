@@ -31,4 +31,5 @@ MonoBehaviour:
   anchors: []
   traps:
   - {x: 2, y: 0}
-  enemySpawns: []
+  enemySpawns:
+  - platform: 1

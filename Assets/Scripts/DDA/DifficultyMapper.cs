@@ -24,7 +24,8 @@ namespace Untai.DDA
 
         public Range gap = new Range(3.5f, 7.5f, 1.0f);
         public Range trap = new Range(0.1f, 0.85f, 0.2f);
-        public Range enemy = new Range(0f, 3f, 1f);
+        // Minimal 1 agar setiap chunk setelah S0 yang punya titik spawn selalu berisi enemy yang terlihat.
+        public Range enemy = new Range(1f, 3f, 1f);
         public Range aggression = new Range(0.1f, 1f, 0.25f);
         public Range checkpoint = new Range(1f, 3f, 1f);
         public Range thread = new Range(52f, 38f, 4f);       // makin sulit, benang makin pendek (satuan jalur)

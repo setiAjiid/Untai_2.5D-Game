@@ -33,7 +33,7 @@ namespace Untai.PCG
                 New().Setup("E1", "Flat Walk", ChunkTier.Easy, 12f,
                     new[] { P(0, 0, 12) }, null, new[] { V(6, 0) }, new[] { 0 }),
                 New().Setup("E2", "Small Gaps", ChunkTier.Easy, 13f,
-                    new[] { P(0, 0, 4), P(6, 0, 3), P(11, 0, 2) }, null, new[] { V(2, 0) }),
+                    new[] { P(0, 0, 4), P(6, 0, 3), P(11, 0, 2) }, null, new[] { V(2, 0) }, new[] { 1 }),
                 New().Setup("E3", "Step Up", ChunkTier.Easy, 12f,
                     new[] { P(0, 0, 4), P(4, 1.5f, 8) }, null, new[] { V(9, 1.5f) }, new[] { 1 }),
                 New().Setup("E4", "Step Down", ChunkTier.Easy, 12f,

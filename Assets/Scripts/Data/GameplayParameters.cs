@@ -34,8 +34,8 @@ namespace Untai.Data
         [Tooltip("Lebar celah maksimum yang boleh muncul pada chunk terpilih.")]
         public float maxGapWidth = 4.5f;
         [Range(0f, 1f)] public float trapDensity = 0.3f;
-        [Tooltip("Jumlah enemy maksimum per chunk.")]
-        [Range(0, 3)] public int enemyCount = 1;
+        [Tooltip("Jumlah enemy maksimum per chunk (minimal 1 setelah chunk pengantar).")]
+        [Range(1, 3)] public int enemyCount = 1;
         [Tooltip("Checkpoint dipasang setiap N chunk (dipaksa lebih rapat jika benang tidak cukup).")]
         [Range(1, 4)] public int checkpointInterval = 2;
         [Tooltip("Bobot pemilihan chunk: mudah, sedang, sulit.")]
