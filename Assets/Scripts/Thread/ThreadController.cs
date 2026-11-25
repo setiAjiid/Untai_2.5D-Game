@@ -37,6 +37,8 @@ namespace Untai.Thread
         /// <summary>Jumlah titik jejak yang tercatat (titik 0 = titik tambat).</summary>
         public int TrailCount => _count;
         public Vector3 GetTrailPoint(int i) => _trail[i];
+        /// <summary>Apakah titik jejak i dicatat saat pemain berdiri di tanah (untuk render menempel permukaan).</summary>
+        public bool IsTrailPointGrounded(int i) => _grounded[i];
         /// <summary>Panjang jejak tercatat tanpa segmen terakhir ke pemain.</summary>
         public float TrailLength => _count > 0 ? _cum[_count - 1] : 0f;
 
@@ -46,6 +48,7 @@ namespace Untai.Thread
         readonly Vector3[] _trail = new Vector3[TrailCapacity];
         // Panjang kumulatif sampai titik i (angka berjalan, sehingga pemotongan jejak O(1)).
         readonly float[] _cum = new float[TrailCapacity];
+        readonly bool[] _grounded = new bool[TrailCapacity];
         int _count;
         Vector3 _lastPos;
 
@@ -78,6 +81,7 @@ namespace Untai.Thread
         {
             _trail[0] = Flat(TetherPoint);
             _cum[0] = 0f;
+            _grounded[0] = false; // titik tambat berada di gulungan checkpoint
             _count = 1;
             if (_motor != null && _motor.Body != null) _lastPos = _motor.Body.position;
         }
@@ -153,10 +157,12 @@ namespace Untai.Thread
                 int k = _count - 1;
                 _trail[k] = pos;
                 _cum[k] = _cum[k - 1] + Vector3.Distance(_trail[k - 1], pos);
+                _grounded[k] = _motor.IsGrounded;
                 return;
             }
             _trail[_count] = pos;
             _cum[_count] = _cum[_count - 1] + segment;
+            _grounded[_count] = _motor.IsGrounded;
             _count++;
         }
 

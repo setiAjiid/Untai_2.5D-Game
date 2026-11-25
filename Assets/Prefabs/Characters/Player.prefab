@@ -192,7 +192,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ee9c47cc96a07b508aad88e70fd3c41, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Untai.Thread.ThreadRenderer
-  width: 0.08
+  width: 0.12
   lineMaterial: {fileID: 2100000, guid: a4411c0e2004f3a4d922b8dfefecd3e4, type: 2}
   slackColor: {r: 0.9, g: 0.85, b: 1, a: 1}
   tautColor: {r: 1, g: 0.15, b: 0.15, a: 1}
