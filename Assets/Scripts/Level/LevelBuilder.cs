@@ -31,6 +31,7 @@ namespace Untai.Level
     /// sehingga chunk berikutnya selalu memakai parameter terbaru (hasil DDA).
     /// Checkpoint dipasang tiap checkpointInterval chunk, dan dipaksa lebih rapat bila
     /// panjang benang dari checkpoint terakhir tidak cukup untuk mencapai checkpoint berikutnya.
+    /// Benang diukur sepanjang jalur, sehingga jarak horizontal dikali GameplayParameters.PathFactor.
     /// </summary>
     public class LevelBuilder : MonoBehaviour
     {
@@ -162,14 +163,15 @@ namespace Untai.Level
         /// <summary>Apakah chunk ini akan diberi checkpoint di awalnya (aturan yang sama dengan Place).</summary>
         bool WouldPlaceCheckpoint(ChunkDefinition def, GameplayParameters p)
         {
-            return _chunksSinceCheckpoint >= p.checkpointInterval
-                   || _distSinceCheckpoint + def.width + 1.5f > _checkpointThread * 0.9f;
+            float pathEstimate = (_distSinceCheckpoint + def.width + 1.5f) * GameplayParameters.PathFactor;
+            return _chunksSinceCheckpoint >= p.checkpointInterval || pathEstimate > _checkpointThread * 0.9f;
         }
 
-        /// <summary>Sisa benang di awal chunk: dari checkpoint baru, atau sisa dari checkpoint sebelumnya.</summary>
+        /// <summary>Sisa benang (satuan jalur) di awal chunk: dari checkpoint baru, atau sisa dari checkpoint sebelumnya.</summary>
         float ThreadBudgetFor(ChunkDefinition def, GameplayParameters p)
         {
-            return WouldPlaceCheckpoint(def, p) ? p.threadLength - 1f : _checkpointThread - _distSinceCheckpoint;
+            const float k = GameplayParameters.PathFactor;
+            return WouldPlaceCheckpoint(def, p) ? p.threadLength - k : _checkpointThread - _distSinceCheckpoint * k;
         }
 
         BuiltChunk Place(ChunkDefinition def, ChunkAssembler.PickResult pick, bool forceCheckpoint)

@@ -76,20 +76,24 @@ namespace Untai.PCG
         float _budgetX;
         float _budget;
 
-        /// <summary>Perkiraan sisa benang (dengan faktor aman) pada posisi x.</summary>
-        public float RemainingThreadAt(float x) => (_budget - Mathf.Abs(x - _budgetX)) * 0.9f;
+        /// <summary>
+        /// Perkiraan sisa benang (dengan faktor aman) pada posisi x. Benang diukur sepanjang jalur,
+        /// jadi jarak horizontal dikali PathFactor sebagai perkiraan panjang jalur.
+        /// </summary>
+        public float RemainingThreadAt(float x) =>
+            (_budget - Mathf.Abs(x - _budgetX) * GameplayParameters.PathFactor) * 0.9f;
 
         /// <summary>
         /// Validasi chunk kandidat yang diletakkan pada offsetX setelah platform "entry".
-        /// threadBudget = sisa benang di awal chunk (dari checkpoint aktif saat itu).
+        /// threadBudget = sisa benang (satuan jalur) di awal chunk (dari checkpoint aktif saat itu).
         /// Mengembalikan null bila lolos, atau alasan penolakan.
         /// </summary>
         public string Validate(Node entry, ChunkDefinition c, float offsetX, GameplayParameters p, float threadBudget)
         {
             _budgetX = offsetX;
             _budget = threadBudget;
-            // Benang harus cukup untuk melintasi chunk dari checkpoint di awal chunk.
-            if (c.width + 2f > p.threadLength * 0.9f) return "lebih panjang dari benang";
+            // Benang (satuan jalur) harus cukup untuk melintasi chunk dari checkpoint di awal chunk.
+            if ((c.width + 2f) * GameplayParameters.PathFactor > p.threadLength * 0.9f) return "lebih panjang dari benang";
 
             _nodes.Clear();
             _nodes.Add(entry);

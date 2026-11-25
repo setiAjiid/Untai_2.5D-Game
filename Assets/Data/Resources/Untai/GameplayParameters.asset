@@ -15,7 +15,7 @@ MonoBehaviour:
   moveSpeed: 6
   jumpVelocity: 11
   gravityMultiplier: 2.5
-  threadLength: 26
+  threadLength: 42
   anchorRange: 7
   maxGapWidth: 4.5
   trapDensity: 0.3

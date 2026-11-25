@@ -19,8 +19,8 @@ namespace Untai.Data
         public float gravityMultiplier = 2.5f;
 
         [Header("Benang")]
-        [Tooltip("Panjang benang dari checkpoint (satuan dunia).")]
-        public float threadLength = 26f;
+        [Tooltip("Panjang benang dari checkpoint (satuan dunia, diukur sepanjang jalur pemain).")]
+        public float threadLength = 42f;
         [Tooltip("Jangkauan maksimum untuk mengait jangkar.")]
         public float anchorRange = 7f;
 
@@ -41,6 +41,12 @@ namespace Untai.Data
         [Range(0f, 1f)] public float aggression = 0.4f;
 
         // ---------- Turunan (dipakai validator dan AI) ----------
+
+        /// <summary>
+        /// Perkiraan rasio panjang jalur pemain (lompat, panjat, ayun) terhadap jarak horizontal.
+        /// PCG memakai faktor ini agar jarak antar checkpoint muat dalam benang berbasis jalur.
+        /// </summary>
+        public const float PathFactor = 1.6f;
 
         public float Gravity => Mathf.Abs(Physics.gravity.y) * gravityMultiplier;
         /// <summary>Tinggi lompat maksimum (v^2 / 2g).</summary>

@@ -27,7 +27,7 @@ namespace Untai.DDA
         public Range enemy = new Range(0f, 3f, 1f);
         public Range aggression = new Range(0.1f, 1f, 0.25f);
         public Range checkpoint = new Range(1f, 3f, 1f);
-        public Range thread = new Range(34f, 24f, 3f);       // makin sulit, benang makin pendek
+        public Range thread = new Range(52f, 38f, 4f);       // makin sulit, benang makin pendek (satuan jalur)
         public Range anchor = new Range(7.5f, 5.0f, 0.6f);   // makin sulit, jangkauan jangkar makin pendek
         public Range easyWeight = new Range(1f, 0.1f, 0.3f);
         public Range mediumWeight = new Range(0.4f, 0.8f, 0.2f);
