@@ -71,6 +71,7 @@ namespace Untai.Player
             Health = maxHealth;
             _invulnerableUntil = Time.time + invulnerableTime;
             _motor.TeleportTo(_thread.TetherPoint + Vector3.up * 1.2f);
+            _thread.ResetTrail(); // jejak benang dimulai lagi dari titik tambat
         }
 
         public void ResetFull()

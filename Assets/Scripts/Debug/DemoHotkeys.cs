@@ -88,6 +88,7 @@ namespace Untai.DebugTools
             if (cp != null) cp.Activate(_director.Thread);
             else _director.Thread.SetTether(new Vector3(c.startX + 1f, top + 1f, 0f), _director.Thread.maxLength);
             _director.Player.TeleportTo(new Vector3(c.startX + 1.5f, top + 1.2f, 0f));
+            _director.Thread.ResetTrail();
         }
 
         static Checkpoint FindCheckpointIn(BuiltChunk c)
