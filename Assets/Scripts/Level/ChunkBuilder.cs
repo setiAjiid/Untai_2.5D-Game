@@ -57,6 +57,10 @@ namespace Untai.Level
             for (int i = 0; i < def.anchors.Count; i++)
                 Anchor.Create(new Vector3(offsetX + def.anchors[i].x, def.anchors[i].y, 0f), root);
 
+            // Peti tarik: posisi tetap dari data chunk (tanpa acak, jadi urutan seed tidak berubah).
+            for (int i = 0; i < def.crateSpawns.Count; i++)
+                PullCrate.Create(new Vector3(offsetX + def.crateSpawns[i].x, def.crateSpawns[i].y, 0f), root);
+
             // Jebakan: setiap kandidat muncul dengan peluang trapDensity.
             trapCount = 0;
             for (int i = 0; i < def.traps.Count; i++)

@@ -51,6 +51,11 @@ namespace Untai.PCG
         public List<EnemySpawnSpec> enemySpawns = new List<EnemySpawnSpec>();
         [Tooltip("Chunk ayun wajib: celah lebih lebar dari lompatan, hanya bisa diseberangi dengan ayunan.")]
         public bool swingOnly;
+        [Tooltip("Posisi peti tarik (x lokal, y = permukaan platform).")]
+        public List<Vector2> crateSpawns = new List<Vector2>();
+
+        /// <summary>Tinggi peti tarik; validator menambahkannya ke tinggi lompat pada chunk berpeti.</summary>
+        public const float CrateHeight = 1.2f;
 
         /// <summary>Lebar celah terbesar antar platform berurutan.</summary>
         public float MaxGap
@@ -80,10 +85,18 @@ namespace Untai.PCG
             traps = trapPoints != null ? new List<Vector2>(trapPoints) : new List<Vector2>();
             enemySpawns = new List<EnemySpawnSpec>();
             swingOnly = false;
+            crateSpawns = new List<Vector2>();
             if (enemyPlatforms != null)
                 foreach (int p in enemyPlatforms) enemySpawns.Add(new EnemySpawnSpec(p));
             entryHeight = plats[0].top;
             exitHeight = plats[plats.Length - 1].top;
+            return this;
+        }
+
+        /// <summary>Tambahkan peti tarik (dipakai pustaka bawaan).</summary>
+        public ChunkDefinition WithCrates(params Vector2[] crates)
+        {
+            crateSpawns = new List<Vector2>(crates);
             return this;
         }
 

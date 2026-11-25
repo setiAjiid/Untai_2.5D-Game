@@ -34,7 +34,7 @@ namespace Untai.PCG
         // (> 5.38 x 1.25 = 6.73). Jangkar diletakkan 3.5 ke kanan dan 3.5 di atas titik pegang di
         // tepi platform sehingga tali 4.95 masih terjangkau pada jangkauan jangkar tersulit (5.0).
 
-        /// <summary>18 chunk: 4 mudah, 4 sedang, 4 sulit, 4 ayun wajib, 2 benang boros.</summary>
+        /// <summary>19 chunk: 4 mudah, 4 sedang, 4 sulit, 4 ayun wajib, 2 benang boros, 1 peti.</summary>
         public static List<ChunkDefinition> CreateDefaults()
         {
             return new List<ChunkDefinition>
@@ -87,6 +87,11 @@ namespace Untai.PCG
                 New().Setup("B2", "Low Road", ChunkTier.Hard, 18f,
                     new[] { P(0, 1.5f, 3), P(4, 0, 2), P(7, -1.5f, 4), P(12, 0, 2), P(15, 1.5f, 3) },
                     new[] { V(9f, 6f) }, new[] { V(9f, -1.5f) }, new[] { 2 }),
+
+                // ---------- Peti: tebing 2.7 (> tinggi lompat 2.47), peti 1.2 ditarik ke kaki tebing ----------
+                // Pemain berjalan ke kaki tebing, mengait peti di belakangnya, menahan S, lalu memanjat peti.
+                New().Setup("C1", "Crate Step", ChunkTier.Medium, 16f,
+                    new[] { P(0, 0, 10), P(10, 2.7f, 6) }).WithCrates(V(3f, 0f)),
             };
         }
 

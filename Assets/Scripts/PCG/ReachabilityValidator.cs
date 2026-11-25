@@ -42,11 +42,19 @@ namespace Untai.PCG
             return reach;
         }
 
+        /// <summary>Tinggi tambahan dari peti tarik pada chunk yang sedang divalidasi (0 bila tanpa peti).</summary>
+        float _crateBoost;
+
         public bool CanJump(Node a, Node b, GameplayParameters p)
         {
             float gap = Mathf.Max(0f, b.left - a.right);
             float dh = b.top - a.top;
-            if (dh > p.JumpHeight * safety) return false;
+            if (dh > p.JumpHeight * safety)
+            {
+                // Chunk berpeti: peti yang ditarik ke kaki tebing menambah tinggi lompat efektif.
+                if (_crateBoost <= 0f || dh - _crateBoost > p.JumpHeight * safety || gap > 1.5f) return false;
+                dh -= _crateBoost;
+            }
             return gap <= JumpReach(dh, p);
         }
 
@@ -95,6 +103,7 @@ namespace Untai.PCG
         {
             _budgetX = offsetX;
             _budget = threadBudget;
+            _crateBoost = c.crateSpawns != null && c.crateSpawns.Count > 0 ? ChunkDefinition.CrateHeight : 0f;
             // Benang (satuan jalur) harus cukup untuk melintasi chunk dari checkpoint di awal chunk.
             // PathFactor sudah memberi margin, jadi cukup lebar chunk + 1 unit (chunk 18 unit muat di benang 32).
             if ((c.width + 1f) * GameplayParameters.PathFactor > p.threadLength) return "lebih panjang dari benang";
