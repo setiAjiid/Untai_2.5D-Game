@@ -20,6 +20,10 @@ namespace Untai.Thread
         public float maxLength = 32f;
         [Tooltip("Jarak minimum dari titik jejak terakhir sebelum titik baru dicatat.")]
         public float pointSpacing = 0.25f;
+        [Tooltip("Pemain dianggap kembali ke titik jejak lama bila sedekat ini (gulung balik).")]
+        public float retractRadius = 0.5f;
+        [Tooltip("Jumlah titik jejak terakhir yang diperiksa untuk gulung balik.")]
+        public int retractWindow = 48;
 
         public Vector3 TetherPoint { get; private set; }
         /// <summary>Panjang benang terpakai (panjang jalur sejak titik tambat), maksimal maxLength.</summary>
@@ -83,6 +87,7 @@ namespace Untai.Thread
             var body = _motor.Body;
             Vector3 pos = Flat(body.position);
 
+            Retract(pos);
             Vector3 last = _trail[_count - 1];
             float tail = Vector3.Distance(last, pos);
             float used = _cum[_count - 1] + tail;
@@ -114,6 +119,30 @@ namespace Untai.Thread
             }
 
             _lastPos = body.position;
+        }
+
+        /// <summary>
+        /// Gulung balik: cari titik jejak terdekat di belakang ujung jejak. Bila pemain sudah
+        /// kembali ke dekat titik itu (lebih dekat daripada ke ujung jejak), titik sesudahnya
+        /// dibuang sehingga benang terpakai berkurang bertahap saat pemain berjalan mundur.
+        /// </summary>
+        void Retract(Vector3 pos)
+        {
+            if (_count < 2) return;
+            float tailSqr = (pos - _trail[_count - 1]).sqrMagnitude;
+            float bestSqr = retractRadius * retractRadius;
+            int best = -1;
+            int stop = Mathf.Max(0, _count - 1 - retractWindow);
+            for (int i = _count - 2; i >= stop; i--)
+            {
+                float d = (pos - _trail[i]).sqrMagnitude;
+                if (d < bestSqr && d < tailSqr)
+                {
+                    bestSqr = d;
+                    best = i;
+                }
+            }
+            if (best >= 0) _count = best + 1; // panjang kumulatif ikut terpotong otomatis
         }
 
         void AppendPoint(Vector3 pos, float segment)
