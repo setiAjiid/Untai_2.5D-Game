@@ -63,6 +63,7 @@ namespace Untai.AI
         bool _lunging;
         bool _hitThisAttack;
         float _lungeStartX;
+        bool _flashOn;
 
         /// <summary>Buat enemy dari prefab PrefabLibrary, atau primitif bila prefab kosong.</summary>
         public static EnemyBrain Create(Vector3 position, float minX, float maxX, PlayerHealth target, Transform parent)
@@ -151,7 +152,12 @@ namespace Untai.AI
                     : s == EnemyState.Attack ? attackMaterial : returnMaterial;
                 bodyRenderer.sharedMaterial = Prims.MatOr(m, StateColor(s));
             }
-            if (stateLabel != null) stateLabel.text = "E" + Id + " " + StateLabel(s);
+            _flashOn = false;
+            if (stateLabel != null)
+            {
+                stateLabel.text = "E" + Id + " " + StateLabel(s);
+                stateLabel.color = StateColor(s); // label ikut berwarna state agar mudah dibaca
+            }
         }
 
         public static string StateLabel(EnemyState s)
@@ -216,8 +222,22 @@ namespace Untai.AI
                     break;
             }
 
+            UpdateWindupFlash();
             x = Mathf.Clamp(x, minX, maxX);
             transform.position = new Vector3(x, _y + (State == EnemyState.Attack && !_lunging ? 0.1f * Mathf.Sin(Time.time * 60f) : 0f), 0f);
+        }
+
+        /// <summary>
+        /// Telegraf serangan: selama ancang-ancang tubuh berkedip putih-merah supaya pemain
+        /// sempat bereaksi. Material hanya diganti saat fase kedip berubah (tanpa alokasi).
+        /// </summary>
+        void UpdateWindupFlash()
+        {
+            if (bodyRenderer == null || State != EnemyState.Attack) return;
+            bool on = !_lunging && Mathf.Repeat(StateTime * 10f, 1f) < 0.5f;
+            if (on == _flashOn) return;
+            _flashOn = on;
+            bodyRenderer.sharedMaterial = on ? Prims.Mat(Color.white) : Prims.MatOr(attackMaterial, AttackColor);
         }
 
         public static Color StateColor(EnemyState s) =>

@@ -21,7 +21,8 @@ namespace Untai.Player
         ThreadController _thread;
         float _invulnerableUntil;
         float _lastDeathTime = -10f;
-        Renderer _renderer;
+        Renderer[] _renderers;
+        bool _visible = true;
 
         /// <summary>Dipanggil sebelum respawn (misal untuk melepas ayunan).</summary>
         public event System.Action BeforeRespawn;
@@ -30,15 +31,18 @@ namespace Untai.Player
         {
             _motor = GetComponent<PlayerMotor>();
             _thread = GetComponent<ThreadController>();
-            _renderer = GetComponent<Renderer>();
+            _renderers = GetComponentsInChildren<Renderer>(); // tubuh + mata ikut berkedip
             Health = maxHealth;
         }
 
         void Update()
         {
             // Kedip saat kebal.
-            if (_renderer != null)
-                _renderer.enabled = !IsInvulnerable || Mathf.Repeat(Time.time * 12f, 1f) > 0.35f;
+            bool show = !IsInvulnerable || Mathf.Repeat(Time.time * 12f, 1f) > 0.35f;
+            if (show == _visible) return;
+            _visible = show;
+            for (int i = 0; i < _renderers.Length; i++)
+                if (_renderers[i] != null) _renderers[i].enabled = show;
         }
 
         public void TakeDamage(int amount, Vector3 sourcePosition)
