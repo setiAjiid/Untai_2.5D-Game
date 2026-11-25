@@ -789,8 +789,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff3391a09612138418749812110fcd28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleManager
-  mainSceneName: Untai_Main_randomseed
-  setSeedSceneName: Untai_Main
+  mainSceneName: Untai_Main
+  fixedSeed: 12345
 --- !u!4 &1409577912
 Transform:
   m_ObjectHideFlags: 0

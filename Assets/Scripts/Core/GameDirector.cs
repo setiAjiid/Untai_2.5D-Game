@@ -22,7 +22,8 @@ namespace Untai.Core
     public class GameDirector : MonoBehaviour
     {
         public int startSeed = 12345;
-        public bool randomStartSeed = false;
+        [Tooltip("Seed acak saat scene dibuka (kecuali Title Screen meminta seed tertentu lewat GameLaunch).")]
+        public bool randomStartSeed = true;
 
         [Header("Aset (isi di Inspector; kosong = dimuat dari Resources/Untai)")]
         public GameplayParameters parameters;
@@ -90,7 +91,9 @@ namespace Untai.Core
             // Parameter awal DDA diterapkan sebelum chunk pertama dirakit.
             Dda.Initialize();
 
-            int seed = randomStartSeed ? _seedRng.Next(1000, 99999) : startSeed;
+            // Prioritas seed: permintaan Title Screen, lalu acak, lalu startSeed.
+            int seed;
+            if (!GameLaunch.TryTakeSeed(out seed)) seed = randomStartSeed ? _seedRng.Next(1000, 99999) : startSeed;
             BuildLevel(seed, 1);
         }
 

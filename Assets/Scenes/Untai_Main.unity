@@ -669,6 +669,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startSeed: 12345
+  randomStartSeed: 1
   parameters: {fileID: 11400000, guid: d1669405e10fd5e56b92c001777e71dd, type: 2}
   prefabs: {fileID: 11400000, guid: 0614d98caf5d0c64baf8f21f3fe43d0b, type: 2}
   player: {fileID: 320426878}
