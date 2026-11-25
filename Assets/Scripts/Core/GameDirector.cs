@@ -80,6 +80,10 @@ namespace Untai.Core
             kill.killHeight = Level.killHeight;
 
             GetOrAdd<DebugTools.DebugHud>().thread = Thread;
+            // HUD pemain selalu tampil (F1 hanya menyembunyikan HUD debug).
+            var hud = GetOrAdd<UI.PlayerHud>();
+            hud.health = Health;
+            hud.thread = Thread;
             GetOrAdd<DebugTools.DemoHotkeys>();
             CameraRig.SideFollowCamera.Attach(Player.transform);
 

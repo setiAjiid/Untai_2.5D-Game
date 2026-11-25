@@ -13,6 +13,7 @@ using Untai.DebugTools;
 using Untai.Level;
 using Untai.Player;
 using Untai.Thread;
+using Untai.UI;
 using Object = UnityEngine.Object;
 
 namespace Untai.EditorTools
@@ -214,6 +215,7 @@ namespace Untai.EditorTools
             GetOrAdd<EnemySpawner>(dgo);
             var hud = GetOrAdd<DebugHud>(dgo);
             GetOrAdd<DemoHotkeys>(dgo);
+            GetOrAdd<PlayerHud>(dgo);
             director.parameters = AssetDatabase.LoadAssetAtPath<GameplayParameters>(ParametersPath);
             director.prefabs = lib;
 
