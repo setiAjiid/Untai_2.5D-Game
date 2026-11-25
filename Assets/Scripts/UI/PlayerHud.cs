@@ -24,7 +24,7 @@ namespace Untai.UI
         public float barWidth = 240f;
         public float barHeight = 14f;
         [Tooltip("Sisa benang (rasio) di bawah nilai ini membuat bar memerah.")]
-        public float lowThreadRatio = 0.25f;
+        public float lowThreadRatio = 0.2f;
 
         [Header("Umpan balik damage")]
         public float flashDuration = 0.3f;
@@ -47,6 +47,15 @@ namespace Untai.UI
         GUIStyle _label;
         GUIStyle _message;
         static readonly GUIContent RespawnText = new GUIContent("Kembali ke checkpoint");
+        static readonly GUIContent TautText = new GUIContent("BENANG TEGANG");
+        static readonly GUIContent TutorialText = new GUIContent(
+            "Tahan Shift atau J dekat bola biru untuk mengait, A/D untuk mengayun, Space untuk melepas");
+        // Petunjuk tutorial cukup sekali per sesi: hilang setelah pemain berhasil menyeberang.
+        static bool s_TutorialDone;
+        GUIStyle _hint;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => s_TutorialDone = false;
 
         float _flashStart = -100f;
         float _lostUntil = -100f;
@@ -104,6 +113,8 @@ namespace Untai.UI
             if (thread != null) DrawThreadBar(left, top + heartSize + 10f);
             DrawLevelInfo();
             DrawRespawnMessage();
+            if (thread != null && thread.IsTaut) DrawCenterText(TautText, Screen.height - 170f, _message);
+            DrawTutorialHint();
 
             GUI.color = old;
         }
@@ -120,6 +131,11 @@ namespace Untai.UI
                 fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter
             };
             _message.normal.textColor = new Color(1f, 0.85f, 0.85f);
+            _hint = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 18, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter
+            };
+            _hint.normal.textColor = new Color(0.75f, 0.9f, 1f);
         }
 
         /// <summary>Lapisan merah layar penuh yang memudar singkat setelah terkena damage.</summary>
@@ -128,6 +144,35 @@ namespace Untai.UI
             float t = (Time.time - _flashStart) / flashDuration;
             if (t < 0f || t >= 1f) return;
             Fill(new Rect(0f, 0f, Screen.width, Screen.height), new Color(1f, 0f, 0f, flashAlpha * (1f - t)));
+        }
+
+        void Update()
+        {
+            // Tutorial selesai bila pemain berdiri di platform seberang chunk tutorial.
+            var lb = LevelBuilder.Instance;
+            if (s_TutorialDone || lb == null || lb.TutorialChunk == null || thread == null) return;
+            var tc = lb.TutorialChunk;
+            float landingLeft = tc.startX + tc.def.platforms[tc.def.platforms.Count - 1].x;
+            var motor = GameDirector.Instance != null ? GameDirector.Instance.Player : null;
+            if (thread.transform.position.x >= landingLeft + 0.5f && (motor == null || motor.IsGrounded))
+                s_TutorialDone = true;
+        }
+
+        void DrawTutorialHint()
+        {
+            var lb = LevelBuilder.Instance;
+            if (s_TutorialDone || lb == null || lb.TutorialChunk == null || thread == null) return;
+            if (thread.transform.position.x < lb.TutorialChunk.startX - 6f) return; // muncul saat mendekat
+            DrawCenterText(TutorialText, Screen.height * 0.16f, _hint);
+        }
+
+        void DrawCenterText(GUIContent text, float y, GUIStyle style)
+        {
+            float w = Mathf.Min(Screen.width - 32f, style.CalcSize(text).x + 40f);
+            var r = new Rect((Screen.width - w) * 0.5f, y, w, 40f);
+            Fill(r, new Color(0f, 0f, 0f, 0.55f));
+            GUI.color = Color.white;
+            GUI.Label(r, text, style);
         }
 
         void DrawRespawnMessage()
@@ -162,10 +207,17 @@ namespace Untai.UI
             var back = new Rect(x, y, barWidth, barHeight);
             Fill(new Rect(back.x - 2f, back.y - 2f, back.width + 4f, back.height + 4f), Outline);
             Fill(back, BarBack);
-            Color c = ratio < lowThreadRatio
-                ? Color.Lerp(ThreadLowColor, ThreadColor, ratio / lowThreadRatio * 0.5f)
-                : ThreadColor;
-            if (ratio < lowThreadRatio * 0.5f && Mathf.Repeat(Time.time * 4f, 1f) < 0.5f) c = Color.white;
+            Color c = ThreadColor;
+            if (ratio < lowThreadRatio)
+            {
+                // Di bawah 20%: bar memerah dan berdenyut (makin cepat saat makin habis), bingkai ikut menyala.
+                float speed = Mathf.Lerp(14f, 6f, ratio / lowThreadRatio);
+                float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * speed);
+                c = Color.Lerp(ThreadLowColor, Color.white, pulse * 0.6f);
+                Fill(new Rect(back.x - 2f, back.y - 2f, back.width + 4f, back.height + 4f),
+                    new Color(1f, 0.2f, 0.2f, 0.35f + 0.5f * pulse));
+                Fill(back, BarBack);
+            }
             Fill(new Rect(back.x, back.y, back.width * ratio, back.height), c);
 
             // Perbarui teks hanya bila nilai (per 0,1 unit) berubah.

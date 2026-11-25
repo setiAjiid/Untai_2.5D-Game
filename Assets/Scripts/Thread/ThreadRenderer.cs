@@ -66,7 +66,10 @@ namespace Untai.Thread
 
             _line.positionCount = count;
             for (int i = 0; i < count; i++) _line.SetPosition(i, _points[i]);
-            Color c = Color.Lerp(tautColor, slackColor, Mathf.Clamp01(_thread.RemainingRatio * 2.5f));
+            // Benang menipis dan memerah saat sisa di bawah 20%.
+            float low = Mathf.Clamp01(_thread.RemainingRatio / 0.2f);
+            _line.widthMultiplier = width * Mathf.Lerp(0.45f, 1f, low);
+            Color c = Color.Lerp(tautColor, slackColor, low);
             _line.startColor = c;
             _line.endColor = c;
         }
