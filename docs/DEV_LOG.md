@@ -163,6 +163,41 @@ Satu entri per fase: tujuan, file utama, dan keputusan penting.
 
 ---
 
+## Fase 9: Perbaikan sistem (branch feat/system-fixes)
+
+### Prioritas 1: benang berbasis jalur
+Benang terpakai sebelumnya dihitung dari jarak horizontal pemain ke titik tambat sehingga benang hanya
+berfungsi sebagai tali pembatas. Kini `ThreadController` mencatat jejak pemain pada buffer tetap beserta panjang
+kumulatifnya, sehingga benang terpakai sama dengan panjang jalur tanpa alokasi per frame. Berjalan mundur ke
+dekat titik jejak lama memotong jejak (gulung balik), dan saat benang tegang hanya gerak maju yang ditahan.
+`ThreadRenderer` menggambar benang mengikuti jejak dengan jumlah titik terbatas. Karena gerak vertikal dan ayunan
+ikut menghabiskan benang, `LevelBuilder` dan `ReachabilityValidator` memakai `PathFactor` 1,6, sedangkan panjang
+benang default dan rentang DDA dinaikkan (26 menjadi 42; rentang 34..24 menjadi 52..38).
+
+### Prioritas 2: pickup benang
+`ThreadPickup` menambah panjang benang maksimum sebesar `pickupThreadBonus` (4 unit). `ChunkBuilder` memasang
+0 sampai 1 pickup per chunk dengan peluang per tingkat (mudah 0,15; sedang 0,35; sulit 0,6). Undian dilakukan
+paling akhir sehingga urutan acak jebakan dan enemy tidak berubah dan seed yang sama tetap menghasilkan level sama.
+
+### Prioritas 3: enemy terlihat
+Rentang jumlah enemy pada `DifficultyMapper` kini minimal 1, sehingga chunk setelah S0 yang memiliki titik spawn
+selalu berisi enemy. Chunk E2 mendapat titik spawn di platform tengah. Enemy berkedip putih-merah selama
+ancang-ancang serangan dan labelnya berwarna sesuai state. HUD debug menampilkan jumlah enemy serta state enemy terdekat.
+
+### Prioritas 3B: HUD pemain
+`PlayerHud` (OnGUI, tanpa paket baru) dipasang oleh `GameDirector` dan selalu tampil. Isinya nyawa, bar sisa
+benang, serta level dan seed. HUD berlangganan `GameEvents.PlayerDamaged` dan `PlayerDied` untuk kedip merah layar,
+hati yang hilang berkedip, dan pesan respawn. Teks angka hanya dibangun ulang saat nilainya berubah.
+
+### Prioritas 4: scene dan Title Screen
+Scene salinan `Untai_Main_randomseed` dihapus; `Untai_Main` memakai `randomStartSeed = true`. Seed dari Title
+Screen diteruskan lewat `GameLaunch`, sehingga tombol Set Seed (seed tetap 12345) dan kolom input seed opsional
+memakai scene yang sama. Build Settings berurutan `TitleScreen` lalu `Untai_Main`, Esc kembali ke Title Screen,
+dan menu **Untai > Fix Title Wiring** memperbaiki sambungan lewat API Editor. Pemeriksaan GUID skrip pada scene
+dan prefab tidak menemukan Missing Script. Perubahan `InputSystem_Actions` dan RPAsset pada commit Title Screen
+hanya pembaruan format, sedangkan input dibaca langsung dari perangkat oleh `InputReader`, sehingga kontrol
+tidak terpengaruh.
+
 ## Alur Sistem
 
 ```
@@ -205,6 +240,7 @@ HUD menampilkan alur ini sebagai panel bernomor [1] Performance, [2] DDA, [3] Pa
 | F7 | Level berikutnya |
 | F8 | Reset DDA ke skor awal |
 | F9 | Lompat ke chunk berikutnya |
+| Esc | Kembali ke Title Screen |
 
 ## Skenario Demo yang Disarankan (sekitar 5 menit)
 

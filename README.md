@@ -16,8 +16,8 @@ Prototipe platformer 2.5D untuk **Project EAS mata kuliah Game Cerdas**, kelompo
 ## Konsep
 
 Platformer 2.5D: model dan kamera 3D, gerak hanya di bidang X dan Y (sumbu Z dikunci).
-Pemain membawa **benang** berpanjang terbatas yang terikat pada checkpoint terakhir dan dapat
-dipakai untuk **mengayun dari jangkar** melewati celah. Level dirakit otomatis dari **chunk**
+Pemain membawa **benang** berpanjang terbatas yang terikat pada checkpoint terakhir dan terurai
+**mengikuti jalur yang dilalui pemain**, serta dapat dipakai untuk **mengayun dari jangkar** melewati celah. Level dirakit otomatis dari **chunk**
 berdasarkan **seed** (PCG), tingkat kesulitan disesuaikan oleh **DDA** dari performa pemain,
 dan **enemy** memiliki AI (FSM) yang agresivitasnya dipengaruhi DDA.
 
@@ -43,10 +43,12 @@ berupa primitif (kapsul dan kubus) sebagai placeholder.
 | AI | `Assets/Scripts/AI` | FSM enemy (Patrol, Chase, Attack, Return) |
 | Data | `Assets/Scripts/Data` | `GameplayParameters` (sumber tunggal parameter) dan `PrefabLibrary` (daftar prefab) |
 | Debug | `Assets/Scripts/Debug` | HUD debug dan tombol demo |
+| UI | `Assets/Scripts/UI` | `PlayerHud`: nyawa, bar benang, level dan seed, umpan balik damage |
+| Title | `Assets/Scripts/Title` | `TitleManager`: tombol Title Screen dan kolom seed opsional |
 | CameraRig | `Assets/Scripts/CameraRig` | Kamera follow samping |
-| Core | `Assets/Scripts/Core` | `GameDirector` (perakit sistem dan game loop), event global, input |
+| Core | `Assets/Scripts/Core` | `GameDirector` (perakit sistem dan game loop), event global, input, `GameLaunch` (seed dari Title Screen) |
 | Editor | `Assets/Scripts/Editor` | Menu Untai: generator chunk, prefab, material, dan isi scene |
-| Prefab | `Assets/Prefabs/{Characters,Level,Thread}` | Player, Enemy / Platform, Checkpoint, Goal, Trap, KillZone / Anchor |
+| Prefab | `Assets/Prefabs/{Characters,Level,Thread}` | Player, Enemy / Platform, Checkpoint, Goal, Trap, KillZone / Anchor, ThreadPickup |
 | Material | `Assets/Materials` | Satu material per warna (pemain, state enemy, tingkat platform, dll.) |
 
 Detail struktur folder: [docs/STRUCTURE.md](docs/STRUCTURE.md).
@@ -62,16 +64,23 @@ Prototipe siap demo (Project EAS). Yang sudah berjalan:
 - [x] **DDA**: rolling window performa, tiga kondisi, pemetaan parameter dengan clamp dan step limit
 - [x] **Game AI**: FSM enemy (Patrol, Chase, Attack, Return), agresivitas dari DDA
 - [x] HUD debug (alur Performance -> DDA -> Parameter -> Gameplay), tombol demo, game loop antar level
+- [x] Benang berbasis jalur (terurai mengikuti jejak, tergulung saat mundur), pickup gulungan benang
+- [x] HUD pemain (nyawa, bar benang, level dan seed) dengan umpan balik damage
+- [x] Title Screen ke Untai_Main (seed acak, seed tetap, atau seed dari kolom input), Esc kembali ke Title
 - [ ] Companion Utility AI, aset visual, audio, efek (belum, opsional)
 
 ## Cara Menjalankan
 
 1. Buka proyek dengan **Unity 6000.3.23f1**.
-2. Buka scene `Assets/Scenes/Untai_Main.unity` lalu tekan **Play**.
+2. Buka scene `Assets/Scenes/TitleScreen.unity` lalu tekan **Play**. Alur scene:
+   - **Start Game**: membuka `Untai_Main` dengan seed acak (atau seed dari kolom input bila diisi).
+   - **Start Game - Set Seed**: membuka `Untai_Main` dengan seed tetap 12345 (atau seed dari kolom input).
+   - **Exit**: keluar dari game. Di dalam permainan, **Esc** kembali ke Title Screen.
+3. `Untai_Main.unity` juga bisa dimainkan langsung (seed acak karena `GameDirector.randomStartSeed = true`).
    Hierarchy scene berisi `GameDirector`, `Player` (instance prefab), `Main Camera` (dengan
    `SideFollowCamera`), `KillZone`, `Directional Light`, dan `Global Volume`. Objek level hasil PCG
-   dibuat saat Play di bawah `GeneratedLevel`.
-3. Scene lain (misal `SampleScene`) juga bisa: bootstrap otomatis membuat game saat Play.
+   dibuat saat Play di bawah `GeneratedLevel`. Scene tanpa `GameDirector` (misal `SampleScene`) tidak
+   lagi membuat game otomatis.
 4. Prefab, material, `PrefabLibrary`, dan isi scene sudah ada di repo. Bila ada yang terhapus,
    jalankan menu **Untai > Build Prefabs and Scene** (aman diulang: prefab yang sudah diedit tidak ditimpa).
    Aset chunk dibuat lewat **Untai > Generate Sample Chunks** (juga otomatis saat Editor dimuat).
@@ -100,8 +109,13 @@ Sebagian besar pengaturan sudah otomatis. Yang masih perlu dilakukan sendiri:
 - **Objek tampil sebagai primitif polos, bukan prefab:** pilih `GameDirector` di Hierarchy dan pastikan field
   `Prefabs` berisi `PrefabLibrary` dan `Parameters` berisi `GameplayParameters` (keduanya di
   `Assets/Data/Resources/Untai`). Jika kosong, game memakai fallback primitif.
-- **Build Settings:** `Untai_Main` otomatis dipasang sebagai scene pertama. Jika belum, jalankan
-  **Untai > Add Main Scene To Build Settings**.
+- **Build Settings:** urutan otomatis `TitleScreen` (indeks 0) lalu `Untai_Main`. Jika belum, jalankan
+  **Untai > Fix Build Settings Scene Order**.
+- **Title Screen:** bila tombol tidak membuka `Untai_Main` atau kolom seed belum ada, jalankan
+  **Untai > Fix Title Wiring** (mengatur `TitleManager`, `randomStartSeed`, Build Settings, dan membuat
+  kolom input seed).
+- **Prefab pickup benang:** jalankan **Untai > Build Prefabs and Scene** sekali agar `ThreadPickup.prefab`
+  dibuat dan dipasang di `PrefabLibrary`. Tanpa prefab, pickup tetap muncul sebagai primitif.
 - **Input:** proyek memakai Input System saja (`Project Settings > Player > Active Input Handling` =
   Input System Package). Jangan diganti ke Input Manager lama, karena input dibaca lewat Input System.
 - **Ruang disk:** Unity butuh ruang kosong untuk cache dan impor paket. Bila muncul error `ENOSPC` atau
@@ -114,7 +128,7 @@ Sebagian besar pengaturan sudah otomatis. Yang masih perlu dilakukan sendiri:
 ```
 Assets/Prefabs/Characters/  Player.prefab   Enemy.prefab
 Assets/Prefabs/Level/       Platform.prefab Checkpoint.prefab Goal.prefab Trap.prefab KillZone.prefab
-Assets/Prefabs/Thread/      Anchor.prefab
+Assets/Prefabs/Thread/      Anchor.prefab   ThreadPickup.prefab
 Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukuran dasar platform)
 ```
 
@@ -131,6 +145,25 @@ Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukur
 - **Prefab baru:** buat prefab sendiri lalu seret ke slot di `PrefabLibrary`; slot yang terisi tidak diubah
   oleh menu builder.
 
+## Mekanik Benang
+
+- Benang terikat pada checkpoint aktif dan **terurai mengikuti jalur** yang benar-benar dilalui pemain.
+  `ThreadController` mencatat jejak (titik baru tiap pemain berpindah sekitar 0,25 unit) pada buffer tetap;
+  benang terpakai = panjang jejak + segmen terakhir ke pemain. Lompatan, panjatan, dan ayunan ikut
+  menghabiskan benang.
+- **Gulung balik:** berjalan mundur menyusuri jejak membuang titik jejak sehingga benang pulih bertahap.
+- **Benang tegang:** bila benang habis, pemain tidak bisa maju tetapi tetap boleh mundur.
+- Checkpoint baru atau respawn mengosongkan jejak. **Pickup gulungan** (bola merah muda) menambah panjang
+  benang maksimum sebesar `pickupThreadBonus` (awal 4 unit); muncul 0 sampai 1 per chunk, lebih sering di chunk sulit.
+- PCG memperkirakan panjang jalur sebagai jarak horizontal x `PathFactor` (1,6) sehingga jarak antar
+  checkpoint selalu muat dalam benang.
+
+## HUD Pemain
+
+`PlayerHud` selalu tampil (F1 hanya menyembunyikan HUD debug): kotak nyawa di kiri bawah, bar sisa benang
+yang memerah saat hampir habis, serta level dan seed di pojok kanan bawah. Saat terkena damage layar berkedip
+merah, hati yang hilang berkedip, dan karakter berkedip selama kebal. Pesan singkat muncul saat respawn.
+
 ## Kontrol
 
 | Tombol | Fungsi |
@@ -140,12 +173,13 @@ Assets/Data/Resources/Untai/PrefabLibrary.asset   (referensi semua prefab + ukur
 | Tahan Shift / J | Kaitkan benang ke jangkar (bola biru, menyala kuning bila terjangkau) |
 | W/S | Gulung/ulur tali saat mengayun |
 | R | Respawn di checkpoint |
+| Esc | Kembali ke Title Screen |
 
 ## Tombol Demo
 
 | Tombol | Fungsi |
 |---|---|
-| F1 | Tampilkan/sembunyikan HUD |
+| F1 | Tampilkan/sembunyikan HUD debug (HUD pemain tetap tampil) |
 | F2 | Simulasi mati |
 | F3 / F4 | Simulasi performa bagus / buruk |
 | F5 | Seed acak baru |
