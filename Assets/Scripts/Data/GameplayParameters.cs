@@ -23,6 +23,12 @@ namespace Untai.Data
         public float threadLength = 42f;
         [Tooltip("Jangkauan maksimum untuk mengait jangkar.")]
         public float anchorRange = 7f;
+        [Tooltip("Tambahan panjang benang maksimum dari satu pickup gulungan.")]
+        public float pickupThreadBonus = 4f;
+        [Tooltip("Peluang muncul pickup per chunk: mudah, sedang, sulit (maksimal satu per chunk).")]
+        [Range(0f, 1f)] public float pickupChanceEasy = 0.15f;
+        [Range(0f, 1f)] public float pickupChanceMedium = 0.35f;
+        [Range(0f, 1f)] public float pickupChanceHard = 0.6f;
 
         [Header("PCG")]
         [Tooltip("Lebar celah maksimum yang boleh muncul pada chunk terpilih.")]
@@ -54,6 +60,17 @@ namespace Untai.Data
         /// <summary>Jarak lompat horizontal di tanah datar (kecepatan x waktu di udara).</summary>
         public float JumpDistance => moveSpeed * (2f * jumpVelocity / Gravity);
 
+        /// <summary>Peluang pickup benang untuk tingkat chunk (0 mudah, 1 sedang, 2 sulit).</summary>
+        public float PickupChance(int tier)
+        {
+            switch (tier)
+            {
+                case 0: return pickupChanceEasy;
+                case 1: return pickupChanceMedium;
+                default: return pickupChanceHard;
+            }
+        }
+
         public float TierWeight(int tier)
         {
             switch (tier)
@@ -68,6 +85,8 @@ namespace Untai.Data
         {
             moveSpeed = o.moveSpeed; jumpVelocity = o.jumpVelocity; gravityMultiplier = o.gravityMultiplier;
             threadLength = o.threadLength; anchorRange = o.anchorRange;
+            pickupThreadBonus = o.pickupThreadBonus; pickupChanceEasy = o.pickupChanceEasy;
+            pickupChanceMedium = o.pickupChanceMedium; pickupChanceHard = o.pickupChanceHard;
             maxGapWidth = o.maxGapWidth; trapDensity = o.trapDensity; enemyCount = o.enemyCount;
             checkpointInterval = o.checkpointInterval;
             easyWeight = o.easyWeight; mediumWeight = o.mediumWeight; hardWeight = o.hardWeight;

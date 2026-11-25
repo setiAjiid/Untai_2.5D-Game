@@ -86,6 +86,7 @@ namespace Untai.EditorTools
             var mGoal = Mat("M_Goal", Goal.DefaultColor);
             var mTrap = Mat("M_Trap", Trap.DefaultColor);
             var mThread = Mat("M_Thread", Color.white, "Sprites/Default");
+            var mPickup = Mat("M_ThreadPickup", ThreadPickup.DefaultColor);
             var noFriction = PhysicsMat("PM_PlayerNoFriction");
 
             // Prefab karakter.
@@ -166,6 +167,14 @@ namespace Untai.EditorTools
                 return a.gameObject;
             });
 
+            var threadPickup = MakePrefab(ThreadDir + "/ThreadPickup.prefab", () =>
+            {
+                var p = ThreadPickup.CreatePrimitive(Vector3.zero, null);
+                SetMat(p.gameObject, mPickup);
+                SetMat(p.transform.Find("Ring"), mWhite);
+                return p.gameObject;
+            });
+
             // PrefabLibrary: buat bila belum ada, isi hanya slot yang kosong.
             var lib = AssetDatabase.LoadAssetAtPath<PrefabLibrary>(LibraryPath);
             if (lib == null)
@@ -182,6 +191,7 @@ namespace Untai.EditorTools
             if (lib.killZone == null) lib.killZone = killZone;
             if (lib.trap == null) lib.trap = trap;
             if (lib.anchor == null) lib.anchor = anchor;
+            if (lib.threadPickup == null) lib.threadPickup = threadPickup;
             EditorUtility.SetDirty(lib);
             AssetDatabase.SaveAssets();
             return lib;
@@ -275,7 +285,7 @@ namespace Untai.EditorTools
             }
             Check("player", lib.player); Check("enemy", lib.enemy); Check("platform", lib.platform);
             Check("checkpoint", lib.checkpoint); Check("goal", lib.goal); Check("killZone", lib.killZone);
-            Check("trap", lib.trap); Check("anchor", lib.anchor);
+            Check("trap", lib.trap); Check("anchor", lib.anchor); Check("threadPickup", lib.threadPickup);
             Check("Player.PlayerMotor", lib.player != null ? lib.player.GetComponent<PlayerMotor>() : null);
             Check("Player.ThreadSwing", lib.player != null ? lib.player.GetComponent<ThreadSwing>() : null);
             Check("Enemy.EnemyBrain", lib.enemy != null ? lib.enemy.GetComponent<EnemyBrain>() : null);

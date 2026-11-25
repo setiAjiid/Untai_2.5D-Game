@@ -27,6 +27,8 @@ namespace Untai.Data
 
         [Header("Benang")]
         public GameObject anchor;
+        [Tooltip("Pickup gulungan benang (menambah panjang benang maksimum).")]
+        public GameObject threadPickup;
 
         [Header("Ukuran dasar platform")]
         [Tooltip("Ketebalan platform pada sumbu Z.")]

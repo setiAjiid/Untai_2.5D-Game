@@ -22,6 +22,7 @@ namespace Untai.Level
         public bool hasCheckpoint;
         public int trapCount;
         public int enemyCount;
+        public bool hasPickup;
         public string note;
         public string paramSummary;
     }
@@ -199,13 +200,13 @@ namespace Untai.Level
             _spawnBuffer.Clear();
             int chunkSeed = ChunkAssembler.DeriveSeed(Seed, index, 999);
             ChunkBuilder.Build(def, _cursorX, _root, special ? 0f : p.trapDensity, special ? 0 : p.enemyCount,
-                chunkSeed, _spawnBuffer, out int traps);
+                special ? 0f : p.PickupChance((int)def.tier), chunkSeed, _spawnBuffer, out int traps, out bool pickup);
 
             var bc = new BuiltChunk
             {
                 index = index, def = def, startX = _cursorX, endX = _cursorX + def.width,
                 attempts = pick.attempts, fallback = pick.fallback, hasCheckpoint = needCheckpoint,
-                trapCount = traps, enemyCount = _spawnBuffer.Count, note = pick.note,
+                trapCount = traps, enemyCount = _spawnBuffer.Count, hasPickup = pickup, note = pick.note,
                 paramSummary = "gap<=" + p.maxGapWidth.ToString("0.0") + " trap " + p.trapDensity.ToString("0.00") +
                                " enemy " + p.enemyCount + " aggr " + p.aggression.ToString("0.00")
             };

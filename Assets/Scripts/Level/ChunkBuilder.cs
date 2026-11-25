@@ -18,7 +18,7 @@ namespace Untai.Level
     /// <summary>
     /// Membangun ChunkDefinition menjadi objek di dunia: platform, jangkar, jebakan, dan titik enemy
     /// diinstansiasi dari prefab PrefabLibrary (fallback primitif bila kosong). Skala dan posisi
-    /// tetap ditentukan data chunk. Jebakan dan enemy dipilih acak ber-seed sesuai parameter.
+    /// tetap ditentukan data chunk. Jebakan, enemy, dan pickup benang dipilih acak ber-seed sesuai parameter.
     /// </summary>
     public static class ChunkBuilder
     {
@@ -29,7 +29,8 @@ namespace Untai.Level
         static readonly List<int> s_Indices = new List<int>(8);
 
         public static Transform Build(ChunkDefinition def, float offsetX, Transform parent, float trapDensity,
-            int enemyCount, int seed, List<EnemySpawnInfo> enemyOut, out int trapCount)
+            int enemyCount, float pickupChance, int seed, List<EnemySpawnInfo> enemyOut, out int trapCount,
+            out bool pickupPlaced)
         {
             Random.InitState(seed);
             var root = new GameObject("Chunk " + def.id).transform;
@@ -84,6 +85,17 @@ namespace Untai.Level
                     minX = left + 0.5f,
                     maxX = right - 0.5f
                 });
+            }
+
+            // Pickup benang: 0 atau 1 per chunk. Diundi paling akhir agar urutan acak jebakan/enemy
+            // tidak berubah (seed yang sama tetap menghasilkan level yang sama).
+            pickupPlaced = false;
+            if (pickupChance > 0f && Random.value < pickupChance)
+            {
+                var plat = def.platforms[Random.Range(0, def.platforms.Count)];
+                float px = offsetX + Mathf.Lerp(plat.x + 0.5f, plat.Right - 0.5f, Random.Range(0.3f, 0.7f));
+                ThreadPickup.Create(new Vector3(px, plat.top + 1.4f, 0f), root);
+                pickupPlaced = true;
             }
             return root;
         }
