@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace Untai.EditorTools
     /// - TitleManager.mainSceneName = Untai_Main.
     /// - GameDirector di Untai_Main memakai randomStartSeed = true.
     /// - Urutan Build Settings: TitleScreen, lalu Untai_Main.
+    /// - Kolom input seed (TMP_InputField) dibuat di atas tombol bila belum ada.
     /// </summary>
     public static class TitleWiring
     {
@@ -51,7 +53,28 @@ namespace Untai.EditorTools
             Debug.Log("[Untai] Title Screen tersambung ke Untai_Main.");
         }
 
-        /// <summary>Langkah tambahan pada TitleManager (diisi langkah berikutnya, misal kolom seed).</summary>
-        static void OnTitleManagerFound(TitleManager manager) { }
+        /// <summary>Buat kolom input seed di Canvas bila TitleManager belum punya.</summary>
+        static void OnTitleManagerFound(TitleManager manager)
+        {
+            if (manager.seedInput != null) return;
+            var canvas = Object.FindAnyObjectByType<Canvas>();
+            if (canvas == null) { Debug.LogWarning("[Untai] Canvas tidak ditemukan; kolom seed dilewati."); return; }
+
+            var go = TMP_DefaultControls.CreateInputField(new TMP_DefaultControls.Resources());
+            go.name = "SeedInput";
+            go.transform.SetParent(canvas.transform, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(0f, -50f); // di atas tombol Start (y -158)
+            rt.sizeDelta = new Vector2(300f, 50f);
+
+            var input = go.GetComponent<TMP_InputField>();
+            input.contentType = TMP_InputField.ContentType.IntegerNumber;
+            input.characterLimit = 9;
+            if (input.placeholder is TMP_Text placeholder) placeholder.text = "Seed (kosong = acak)";
+            if (input.textComponent != null) input.textComponent.fontSize = 22;
+            manager.seedInput = input;
+            Undo.RegisterCreatedObjectUndo(go, "Create Seed Input");
+        }
     }
 }
