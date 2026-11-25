@@ -24,6 +24,8 @@ namespace Untai.Data
         public GameObject goal;
         public GameObject killZone;
         public GameObject trap;
+        [Tooltip("Peti yang bisa ditarik benang dan dijadikan pijakan.")]
+        public GameObject pullCrate;
 
         [Header("Benang")]
         public GameObject anchor;
